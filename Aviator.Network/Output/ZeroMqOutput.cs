@@ -7,12 +7,12 @@ namespace Aviator.Network.Output;
 public class ZeroMqOutput(string host, int port, ILogger<ZeroMqOutput> logger) : IOutput
 {
     public string EndPoint { get; init; } = $"{host}:{port}";
-    private readonly RequestSocket _requestSocket = new($">tcp://{host}:{port}");
     public ValueTask WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
         try
         {
-            _requestSocket.SendFrame(buffer);
+            var client = new RequestSocket($">tcp://{host}:{port}");
+            client.SendFrame(buffer);
         }
         catch (Exception ex)
         {
