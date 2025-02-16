@@ -16,10 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="One_Sgp4" Version="1.1.0"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <Folder Include="Config\"/>
     </ItemGroup>
 
