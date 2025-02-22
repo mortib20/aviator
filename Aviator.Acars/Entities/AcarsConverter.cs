@@ -9,32 +9,32 @@ namespace Aviator.Acars.Entities;
 
 public abstract class AcarsConverter
 {
-    public static BasicAcars? BasicAcarsFromType(byte[] buffer, [DisallowNull] AcarsType? acarsType)
+    public static BasicAcars? BasicAcarsFromType(byte[] buffer, [DisallowNull] SourceType? sourceType)
     {
-        switch (acarsType)
+        switch (sourceType)
         {
-            case AcarsType.Aero:
+            case SourceType.Aero:
                 var jaero = JsonSerializer.Deserialize<Aero.Aero>(buffer);
                 if (jaero is null) break;
                 return ConvertAero(jaero);
-            case AcarsType.Vdl2:
+            case SourceType.Vdl2:
                 var vdl2 = JsonSerializer.Deserialize<DumpVdl2>(buffer);
                 if (vdl2 is null) break;
                 return ConvertDumpVdl2(vdl2);
-            case AcarsType.Hfdl:
+            case SourceType.Hfdl:
                 var hfdl = JsonSerializer.Deserialize<DumpHfdl>(buffer);
                 if (hfdl is null) break;
                 return ConvertDumpHfdl(hfdl);
-            case AcarsType.Acars:
+            case SourceType.Acars:
                 var acars = JsonSerializer.Deserialize<Acarsdec>(buffer);
                 if (acars is null) break;
                 return ConvertAcarsdec(acars);
-            case AcarsType.Iridium:
+            case SourceType.Iridium:
                 var iridium = JsonSerializer.Deserialize<IridiumAcars>(buffer);
                 if (iridium is null) break;
                 return ConvertIridium(iridium);
             default:
-                throw new ArgumentOutOfRangeException(acarsType.ToString());
+                throw new ArgumentOutOfRangeException(sourceType.ToString());
         }
 
         return null;

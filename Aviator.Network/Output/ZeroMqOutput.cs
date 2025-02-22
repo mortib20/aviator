@@ -11,7 +11,7 @@ public class ZeroMqOutput(string host, int port, ILogger<ZeroMqOutput> logger) :
     {
         try
         {
-            var client = new RequestSocket($">tcp://{host}:{port}");
+            var client = new RequestSocket($">tcp://{EndPoint}");
             client.SendFrame(buffer);
         }
         catch (Exception ex)

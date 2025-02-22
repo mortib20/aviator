@@ -1,13 +1,15 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aviator.Acars.Database;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Metrics;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars;
 
-public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager, IAcarsMetrics metrics, IAcarsDatabase database)
+public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager, IAcarsMetrics metrics, IAcarsDatabase database, IHubContext<AcarsHub> acarsHub)
     : BackgroundService
 {
     private const int MinBytes = 128;
@@ -85,5 +87,11 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
         }
 
         await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
+
+        if (airFrame.FrameType == FrameType.Acars)
+        {
+            var basicAcars = AcarsConverter.BasicAcarsFromType(bytes, airFrame.SourceType);
+            await acarsHub.Clients.All.SendAsync("receiveAcarsFrame", JsonSerializer.Serialize(basicAcars), cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
     }
 }

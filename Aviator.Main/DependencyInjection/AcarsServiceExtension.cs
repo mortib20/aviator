@@ -6,6 +6,7 @@ using Aviator.Acars.Entities;
 using Aviator.Acars.Metrics;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Aviator.Main.DependencyInjection;
 
@@ -74,7 +75,7 @@ public static class AcarsServiceExtension
         var acarsIoManager = new AcarsIoManager(s.GetRequiredService<ILogger<AcarsIoManager>>(), input, outputDictionary);
 
         return new AcarsService(s.GetRequiredService<ILogger<AcarsService>>(), acarsIoManager, s.GetRequiredService<IAcarsMetrics>(),
-            s.GetRequiredService<IAcarsDatabase>());
+            s.GetRequiredService<IAcarsDatabase>(), s.GetRequiredService<IHubContext<AcarsHub>>());
     }
 
     private static Dictionary<SourceType,List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)
