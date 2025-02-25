@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aviator.Acars.Database;
@@ -43,7 +44,15 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Invalid JSON payload, Ignoring...");
+            logger.LogWarning(ex, "Invalid JSON payload, Ignoring... (But we will save it for debug later)");
+            var logPath = Path.Combine(Environment.CurrentDirectory, "logs");
+            if (!Directory.Exists(logPath))
+            {
+                Directory.CreateDirectory(logPath);
+            }
+
+            var filename = $"{DateTime.Now:s}.json";
+            await File.WriteAllBytesAsync(Path.Combine(logPath, filename), bytes, cancellationToken).ConfigureAwait(false);
             return;
         }
 
