@@ -4,6 +4,7 @@ using Aviator.Main.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 
+const string logFormat = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 var logPath = Path.Combine(Environment.CurrentDirectory, "logs");
 if (!Directory.Exists(logPath))
 {
@@ -11,8 +12,8 @@ if (!Directory.Exists(logPath))
 }
 
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), LogEventLevel.Information)
+    .WriteTo.Console(outputTemplate: logFormat)
+    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
     .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.AspNetCore.Mvc", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
