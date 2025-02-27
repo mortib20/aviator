@@ -1,36 +1,65 @@
-using System.Net;
 using System.Text.Json;
 using Aviator.Acars;
 using Aviator.Main.DependencyInjection;
-using Microsoft.Extensions.Logging.Console;
+using Serilog;
+using Serilog.Events;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(c => c.Listen(IPAddress.Any, 21001));
-
-builder.Services.AddCors();
-builder.Services.AddSignalR();
-
-builder.AddNetworkUtilities();
-builder.AddAcarsService();
-
-builder.Logging.AddSimpleConsole(s =>
+const string logFormat = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+var logPath = Path.Combine(Environment.CurrentDirectory, "logs");
+if (!Directory.Exists(logPath))
 {
-    s.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
-    s.ColorBehavior = LoggerColorBehavior.Enabled;
-});
+    Directory.CreateDirectory(logPath);
+}
 
-var app = builder.Build();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(outputTemplate: logFormat)
+    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Mvc", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
+    .CreateLogger();
 
-app.UseCors(s =>
+try
 {
-    s.AllowAnyHeader();
-    s.AllowAnyMethod();
-    s.SetIsOriginAllowed(_ => true);
-    s.AllowCredentials();
-});
+    var builder = WebApplication.CreateBuilder(args);
 
-app.MapHub<AcarsHub>("/Acars");
-app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
+    builder.Services.AddSerilog();
+    
+    builder.WebHost.UseKestrel(k =>
+    {
+        k.ListenAnyIP(21001);
+        k.AllowResponseHeaderCompression = true;
+    });
 
-await app.RunAsync().ConfigureAwait(false);
+    builder.Services.AddResponseCompression();
+    builder.Services.AddCors();
+    builder.Services.AddSignalR();
+
+    builder.AddNetworkUtilities();
+    builder.AddAcarsService();
+
+    var app = builder.Build();
+
+    app.UseCors(s =>
+    {
+        s.AllowAnyHeader();
+        s.AllowAnyMethod();
+        s.SetIsOriginAllowed(_ => true);
+        s.AllowCredentials();
+    });
+
+    app.UseResponseCompression();
+    
+    app.MapHub<AcarsHub>("/Acars");
+    app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
+
+    await app.RunAsync().ConfigureAwait(false);
+}
+catch (Exception e)
+{
+    Log.Fatal(e, "Aviator terminated unexpectedly");
+}
+finally
+{
+    await Log.CloseAndFlushAsync().ConfigureAwait(false);
+}
