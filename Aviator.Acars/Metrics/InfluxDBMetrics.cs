@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Aviator.Acars.Config;
 using Aviator.Acars.Entities;
 using InfluxDB3.Client;

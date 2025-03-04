@@ -1,4 +1,4 @@
-﻿using Aviator.Acars.Entities;
+using Aviator.Acars.Entities;
 
 namespace Aviator.Acars.Metrics;
 
