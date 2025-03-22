@@ -22,7 +22,7 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
         logger.LogInformation("Starting {Type} and watching {Path} {File}", this, statsPath, statsFile);
         
         var watcher = new FileSystemWatcher(statsPath, statsFile);
-        watcher.NotifyFilter = NotifyFilters.LastWrite;
+        watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
         watcher.EnableRaisingEvents = true;
         watcher.Changed += async (sender, e) => await WatcherOnChanged(sender, e, stoppingToken);
 
