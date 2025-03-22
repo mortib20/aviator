@@ -27,22 +27,33 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
 
         logger.LogInformation("Starting {Type} and watching {Path} {File}", this, statsPath, statsFile);
         
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            logger.LogInformation("File changed going to convert and put metrics out! {Path} {File}", statsPath, statsFile);
-            var fileContent = await File.ReadAllLinesAsync(config.StatsPath, stoppingToken).ConfigureAwait(false);
-
-            var stats = new AdsbStats
+            while (!stoppingToken.IsCancellationRequested)
             {
-                AircraftTotal = int.Parse(fileContent.First(s => s.Contains("readsb_aircraft_total")).Split(' ')[1]),
-                Gain = int.Parse(fileContent.First(s => s.Contains("readsb_sdr_gain")).Split(' ')[1]),
-                MessagesValid = int.Parse(fileContent.First(s => s.Contains("readsb_messages_valid")).Split(' ')[1]),
-                MessagesInvalid = int.Parse(fileContent.First(s => s.Contains("readsb_messages_invalid")).Split(' ')[1]),
-            };
-            
-            await metrics.IncreaseAsync(stats, stoppingToken).ConfigureAwait(false);
-            
-            await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken).ConfigureAwait(false);
+                logger.LogInformation("File changed going to convert and put metrics out! {Path} {File}", statsPath,
+                    statsFile);
+                var fileContent = await File.ReadAllLinesAsync(config.StatsPath, stoppingToken).ConfigureAwait(false);
+
+                var stats = new AdsbStats
+                {
+                    AircraftTotal =
+                        int.Parse(fileContent.First(s => s.Contains("readsb_aircraft_total")).Split(' ')[1]),
+                    Gain = float.Parse(fileContent.First(s => s.Contains("readsb_sdr_gain")).Split(' ')[1]),
+                    MessagesValid =
+                        int.Parse(fileContent.First(s => s.Contains("readsb_messages_valid")).Split(' ')[1]),
+                    MessagesInvalid =
+                        int.Parse(fileContent.First(s => s.Contains("readsb_messages_invalid")).Split(' ')[1]),
+                };
+
+                await metrics.IncreaseAsync(stats, stoppingToken).ConfigureAwait(false);
+
+                await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to get ADS-B Metrics!");
         }
     }
 }
