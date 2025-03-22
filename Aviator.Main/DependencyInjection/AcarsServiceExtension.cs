@@ -4,8 +4,10 @@ using Aviator.Acars.Config;
 using Aviator.Acars.Database;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Metrics;
+using Aviator.Main.Config;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
+using InfluxDB3.Client;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Aviator.Main.DependencyInjection;
@@ -16,25 +18,28 @@ public static class AcarsServiceExtension
     {
         var acarsConfig = builder.Configuration.GetSection(AcarsConfig.Section).Get<AcarsConfig>();
         ArgumentNullException.ThrowIfNull(acarsConfig);
+        
+        var metricsConfig = builder.Configuration.GetSection(MetricsConfig.Section).Get<MetricsConfig>();
+        ArgumentNullException.ThrowIfNull(metricsConfig);
 
-        SetupMetrics(builder, acarsConfig);
+        SetupMetrics(builder, metricsConfig);
         SetupDatabases(builder, acarsConfig);
         builder.Services.AddHostedService<AcarsService>(s => SetupAcarsService(s, acarsConfig));
 
         return builder;
     }
 
-    private static void SetupMetrics(WebApplicationBuilder builder, AcarsConfig acarsConfig)
+    private static void SetupMetrics(WebApplicationBuilder builder, MetricsConfig metricsConfig)
     {
         builder.Services.AddSingleton<IAcarsMetrics>(s =>
         {
             var logger = s.GetRequiredService<ILogger<AcarsService>>();
             var metrics = new Collection<IAcarsMetrics>();
             
-            if (acarsConfig.InfluxDb is not null && acarsConfig.InfluxDb!.Enabled)
+            if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
-                var metricLogger = s.GetRequiredService<ILogger<InfluxDbMetrics>>();
-                var metric = new InfluxDbMetrics(acarsConfig.InfluxDb, metricLogger);
+                var metricLogger = s.GetRequiredService<ILogger<InfluxDBAcarsMetrics>>();
+                var metric = new InfluxDBAcarsMetrics(s.GetRequiredService<InfluxDBClient>(), metricLogger);
                 metrics.Add(metric);
             }
             

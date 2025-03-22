@@ -13,10 +13,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Aviator.Acars\Aviator.Acars.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Config\"/>
+        <ProjectReference Include="..\Aviator.Adsb\Aviator.Adsb.csproj" />
     </ItemGroup>
 
     <ItemGroup>

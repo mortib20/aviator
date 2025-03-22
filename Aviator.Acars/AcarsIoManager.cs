@@ -9,7 +9,7 @@ public class AcarsIoManager(ILogger<AcarsIoManager> logger, IInput input, Dictio
 {
     public async Task StartInputAsync(InputHandler onReceivedAsync, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Start Input on {Endpoint}", input.EndPoint);
+        logger.LogInformation("Start Input on {Endpoint}", input);
 
         await input.ReceiveAsync(onReceivedAsync, cancellationToken).ConfigureAwait(false);
     }

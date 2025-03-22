@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Acars", "Aviator.Ac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Network", "Aviator.Network\Aviator.Network.csproj", "{1153F39E-E120-440B-A3A9-0C10A73D6E51}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Adsb", "Aviator.Adsb\Aviator.Adsb.csproj", "{3E7FCC6D-C21B-475F-B96A-92D683265EC2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{1153F39E-E120-440B-A3A9-0C10A73D6E51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1153F39E-E120-440B-A3A9-0C10A73D6E51}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1153F39E-E120-440B-A3A9-0C10A73D6E51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E7FCC6D-C21B-475F-B96A-92D683265EC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E7FCC6D-C21B-475F-B96A-92D683265EC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E7FCC6D-C21B-475F-B96A-92D683265EC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E7FCC6D-C21B-475F-B96A-92D683265EC2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -4,7 +4,7 @@ using Aviator.Main.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 
-const string logFormat = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+const string logFormat = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}{Scope}] {Message:lj}{NewLine}{Exception}";
 var logPath = Path.Combine(Environment.CurrentDirectory, "logs");
 if (!Directory.Exists(logPath))
 {
@@ -35,8 +35,10 @@ try
     builder.Services.AddCors();
     builder.Services.AddSignalR();
 
+    builder.AddAviatorInfluxDb();
     builder.AddNetworkUtilities();
     builder.AddAcarsService();
+    builder.AddAdsbService();
 
     var app = builder.Build();
 

@@ -31,6 +31,7 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
     private async Task HandleClientAsync(InputHandler handler, TcpClient client,
         CancellationToken cancellationToken = default)
     {
+        var loggerScope = logger.BeginScope(EndPoint);
         await using var stream = client.GetStream();
 
         var remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
@@ -50,5 +51,11 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
 
             await handler.Invoke(buffer[..length].ToArray(), cancellationToken).ConfigureAwait(false);
         }
+        loggerScope?.Dispose();
+    }
+    
+    public override string ToString()
+    {
+        return $"{nameof(TcpInput)}/{host}:{port}";
     }
 }
