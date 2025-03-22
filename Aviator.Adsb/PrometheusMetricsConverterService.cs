@@ -19,29 +19,27 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
             return;
         }
 
+        if (!File.Exists(config.StatsPath))
+        {
+            logger.LogWarning("File {File} does not exist...", statsFile);
+            return;
+        }
+
         logger.LogInformation("Starting {Type} and watching {Path} {File}", this, statsPath, statsFile);
         
-        var watcher = new FileSystemWatcher(statsPath, statsFile);
-        watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
-        watcher.EnableRaisingEvents = true;
-        watcher.Changed += async (sender, e) => await WatcherOnChanged(sender, e, stoppingToken);
-
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
+            logger.LogInformation("File changed going to convert and put metrics out! {Path} {File}", statsPath, statsFile);
+            var fileContent = await File.ReadAllLinesAsync(config.StatsPath, stoppingToken).ConfigureAwait(false);
+
+            var stats = new AdsbStats
+            {
+                AircraftTotal = int.Parse(fileContent.First(s => s.Contains("readsb_aircraft_total")).Split(' ')[1])
+            };
+
+            await metrics.IncreaseAsync(stats, stoppingToken).ConfigureAwait(false);
+            
+            await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken).ConfigureAwait(false);
         }
-    }
-
-    private async Task WatcherOnChanged(object sender, FileSystemEventArgs e, CancellationToken cancellationToken = default)
-    {
-        logger.LogInformation("File changed going to convert and put metrics out! {Path} {File}", e.FullPath, e.Name);
-        var fileContent = await File.ReadAllLinesAsync(e.FullPath, cancellationToken).ConfigureAwait(false);
-
-        var stats = new AdsbStats()
-        {
-            AircraftTotal = int.Parse(fileContent.First(s => s.Contains("readsb_aircraft_total")).Split(' ')[1])
-        };
-
-        await metrics.IncreaseAsync(stats, cancellationToken).ConfigureAwait(false);
     }
 }
