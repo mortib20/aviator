@@ -20,7 +20,10 @@ public class InfluxDbAdsbMetrics(InfluxDBClient client, ILogger<InfluxDbAdsbMetr
         try
         {
             var point = PointData.Measurement("adsb")
-                .SetField("aircraftTotal", adsbStats.AircraftTotal);
+                .SetField("aircraftTotal", adsbStats.AircraftTotal)
+                .SetField("messagesValid", adsbStats.MessagesValid)
+                .SetField("messagesInvalid", adsbStats.MessagesInvalid)
+                .SetField("gain", adsbStats.Gain);
 
             await client.WritePointAsync(point, cancellationToken: cancellationToken);
         }

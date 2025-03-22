@@ -34,9 +34,12 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
 
             var stats = new AdsbStats
             {
-                AircraftTotal = int.Parse(fileContent.First(s => s.Contains("readsb_aircraft_total")).Split(' ')[1])
+                AircraftTotal = int.Parse(fileContent.First(s => s.Contains("readsb_aircraft_total")).Split(' ')[1]),
+                Gain = int.Parse(fileContent.First(s => s.Contains("readsb_sdr_gain")).Split(' ')[1]),
+                MessagesValid = int.Parse(fileContent.First(s => s.Contains("readsb_messages_valid")).Split(' ')[1]),
+                MessagesInvalid = int.Parse(fileContent.First(s => s.Contains("readsb_messages_invalid")).Split(' ')[1]),
             };
-
+            
             await metrics.IncreaseAsync(stats, stoppingToken).ConfigureAwait(false);
             
             await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken).ConfigureAwait(false);
