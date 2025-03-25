@@ -31,8 +31,6 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                logger.LogInformation("File changed going to convert and put metrics out! {Path} {File}", statsPath,
-                    statsFile);
                 var fileContent = await File.ReadAllLinesAsync(config.StatsPath, stoppingToken).ConfigureAwait(false);
 
                 var stats = new AdsbStats
