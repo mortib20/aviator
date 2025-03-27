@@ -11,9 +11,9 @@ public static class InfluxDbExtension
     {
         builder.Services.Configure<InfluxDbConfig>(builder.Configuration.GetSection(MetricsConfig.Section)
             .GetSection(InfluxDbConfig.Section));
-        
+
         builder.Services.AddSingleton<InfluxDbMetrics>();
-        
+
         return builder;
     }
 }

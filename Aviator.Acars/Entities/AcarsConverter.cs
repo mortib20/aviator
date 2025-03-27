@@ -14,23 +14,43 @@ public abstract class AcarsConverter
         {
             case SourceType.Aero:
                 var jaero = JsonSerializer.Deserialize<Aero.Aero>(buffer);
-                if (jaero is null) break;
+                if (jaero is null)
+                {
+                    break;
+                }
+
                 return ConvertAero(jaero);
             case SourceType.Vdl2:
                 var vdl2 = JsonSerializer.Deserialize<DumpVdl2>(buffer);
-                if (vdl2 is null) break;
+                if (vdl2 is null)
+                {
+                    break;
+                }
+
                 return ConvertDumpVdl2(vdl2);
             case SourceType.Hfdl:
                 var hfdl = JsonSerializer.Deserialize<DumpHfdl>(buffer);
-                if (hfdl is null) break;
+                if (hfdl is null)
+                {
+                    break;
+                }
+
                 return ConvertDumpHfdl(hfdl);
             case SourceType.Acars:
                 var acars = JsonSerializer.Deserialize<Acarsdec>(buffer);
-                if (acars is null) break;
+                if (acars is null)
+                {
+                    break;
+                }
+
                 return ConvertAcarsdec(acars);
             case SourceType.Iridium:
                 var iridium = JsonSerializer.Deserialize<IridiumAcars>(buffer);
-                if (iridium is null) break;
+                if (iridium is null)
+                {
+                    break;
+                }
+
                 return ConvertIridium(iridium);
             default:
                 throw new ArgumentOutOfRangeException(sourceType.ToString());
@@ -39,18 +59,18 @@ public abstract class AcarsConverter
         return null;
     }
 
-    static long RoundToFirstFourDigits(long num)
+    private static long RoundToFirstFourDigits(long num)
     {
         // Get the number of digits in the number
-        int numberOfDigits = (int)Math.Floor(Math.Log10(num) + 1);
+        var numberOfDigits = (int)Math.Floor(Math.Log10(num) + 1);
 
         // Calculate the power of 10 needed to round off the digits after the first four
-        int power = numberOfDigits - 4;
+        var power = numberOfDigits - 4;
 
         if (power > 0)
         {
-            long factor = (long)Math.Pow(10, power);
-            return (num / factor) * factor; // Keep only the first four digits
+            var factor = (long)Math.Pow(10, power);
+            return num / factor * factor; // Keep only the first four digits
         }
 
         // If the number has 4 or fewer digits, return as is

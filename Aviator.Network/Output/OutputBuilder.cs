@@ -24,7 +24,7 @@ public class OutputBuilder(ILoggerFactory loggerFactory) : IBuilder<IOutput>
     {
         return new UdpOutput(host, port, loggerFactory.CreateLogger<UdpOutput>());
     }
-    
+
     private ZeroMqOutput CreateZeroMqOutput(string host, int port)
     {
         return new ZeroMqOutput(host, port, loggerFactory.CreateLogger<ZeroMqOutput>());

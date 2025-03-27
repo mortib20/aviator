@@ -51,9 +51,10 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
 
             await handler.Invoke(buffer[..length].ToArray(), cancellationToken).ConfigureAwait(false);
         }
+
         loggerScope?.Dispose();
     }
-    
+
     public override string ToString()
     {
         return $"{nameof(TcpInput)}/{host}:{port}";

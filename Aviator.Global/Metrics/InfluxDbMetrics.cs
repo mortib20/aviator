@@ -22,7 +22,7 @@ public class InfluxDbMetrics(ILogger<InfluxDbMetrics> logger, IOptions<InfluxDbC
 
         try
         {
-            await _influxDbClient.WritePointAsync(point: pointData, cancellationToken: cancellationToken)
+            await _influxDbClient.WritePointAsync(pointData, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (InfluxDBApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
@@ -35,7 +35,7 @@ public class InfluxDbMetrics(ILogger<InfluxDbMetrics> logger, IOptions<InfluxDbC
             logger.LogError(ex, "Failed to write DataPoint to InfluxDB... {LineProtocol}", pointData.ToLineProtocol());
         }
     }
-    
+
     private static InfluxDBClient SetupClient(InfluxDbConfig config)
     {
         return new InfluxDBClient(new ClientConfig()
@@ -50,5 +50,5 @@ public class InfluxDbMetrics(ILogger<InfluxDbMetrics> logger, IOptions<InfluxDbC
             },
             Timeout = TimeSpan.FromSeconds(60)
         });
-    } 
+    }
 }

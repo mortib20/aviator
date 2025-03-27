@@ -6,19 +6,19 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <ApplicationIcon>aviator.ico</ApplicationIcon>
     </PropertyGroup>
-    
+
     <PropertyGroup>
         <InvariantGlobalization>true</InvariantGlobalization>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Aviator.Acars\Aviator.Acars.csproj"/>
-        <ProjectReference Include="..\Aviator.Adsb\Aviator.Adsb.csproj" />
-        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj" />
+        <ProjectReference Include="..\Aviator.Adsb\Aviator.Adsb.csproj"/>
+        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
     </ItemGroup>
 
 </Project>

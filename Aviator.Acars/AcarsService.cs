@@ -36,7 +36,7 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
             logger.LogWarning("Received payload to small!");
             return;
         }
-        
+
         JsonNode jsonAcars;
         try
         {
@@ -84,11 +84,14 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
         {
             logger.LogError(ex, "Failed to save bytes in database!");
         }
-        
+
         var airFrame = AirFrameConverter.FromType(bytes, sourceType);
 
 
-        if (airFrame is null) return;
+        if (airFrame is null)
+        {
+            return;
+        }
 
         if (SourceTypeFinder.HasAcars(jsonAcars))
         {
@@ -100,7 +103,7 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
         if (airFrame.FrameType == FrameType.Acars)
         {
             var basicAcars = AcarsConverter.BasicAcarsFromType(bytes, airFrame.SourceType);
-            await acarsHub.Clients.All.SendAsync("receiveAcarsFrame", JsonSerializer.Serialize(basicAcars), cancellationToken: cancellationToken).ConfigureAwait(false);
+            await acarsHub.Clients.All.SendAsync("receiveAcarsFrame", JsonSerializer.Serialize(basicAcars), cancellationToken).ConfigureAwait(false);
         }
     }
 }

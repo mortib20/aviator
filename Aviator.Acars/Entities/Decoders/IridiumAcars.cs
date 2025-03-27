@@ -3,10 +3,10 @@ namespace Aviator.Acars.Entities;
 public class IridiumAcars
 {
     public App app { get; set; }
-    
+
     public IrSource source { get; set; }
     public IrAcars acars { get; set; }
-    
+
     public int freq { get; set; }
     public float level { get; set; }
     public string header { get; set; }

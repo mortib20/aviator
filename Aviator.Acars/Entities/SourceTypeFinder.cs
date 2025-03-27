@@ -8,15 +8,30 @@ public abstract class SourceTypeFinder
     {
         try
         {
-            if (IsAero(json)) return SourceType.Aero;
+            if (IsAero(json))
+            {
+                return SourceType.Aero;
+            }
 
-            if (IsAcars(json)) return SourceType.Acars;
+            if (IsAcars(json))
+            {
+                return SourceType.Acars;
+            }
 
-            if (IsHfdl(json)) return SourceType.Hfdl;
+            if (IsHfdl(json))
+            {
+                return SourceType.Hfdl;
+            }
 
-            if (IsVdl2(json)) return SourceType.Vdl2;
+            if (IsVdl2(json))
+            {
+                return SourceType.Vdl2;
+            }
 
-            if (IsIridium(json)) return SourceType.Iridium;
+            if (IsIridium(json))
+            {
+                return SourceType.Iridium;
+            }
         }
         catch (Exception ex)
         {
@@ -45,7 +60,7 @@ public abstract class SourceTypeFinder
     {
         return json?["vdl2"]?["app"]?["name"]?.ToString() == "dumpvdl2";
     }
-    
+
     private static bool IsIridium(JsonNode json)
     {
         return json?["app"]?["name"]?.ToString() == "iridium-toolkit";

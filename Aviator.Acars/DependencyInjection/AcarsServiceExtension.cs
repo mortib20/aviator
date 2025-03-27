@@ -23,7 +23,7 @@ public static class AcarsServiceExtension
     {
         var acarsConfig = builder.Configuration.GetSection(AcarsConfig.Section).Get<AcarsConfig>();
         ArgumentNullException.ThrowIfNull(acarsConfig);
-        
+
         var metricsConfig = builder.Configuration.GetSection(MetricsConfig.Section).Get<MetricsConfig>();
         ArgumentNullException.ThrowIfNull(metricsConfig);
 
@@ -40,17 +40,17 @@ public static class AcarsServiceExtension
         {
             var logger = s.GetRequiredService<ILogger<AcarsService>>();
             var metrics = new Collection<IAcarsMetrics>();
-            
+
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
                 var metricLogger = s.GetRequiredService<ILogger<InfluxDBAcarsMetrics>>();
                 var metric = new InfluxDBAcarsMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
                 metrics.Add(metric);
             }
-            
+
             var enabledMetrics = metrics.Select(acarsMetrics => acarsMetrics.GetType()).ToList();
             logger.LogInformation("Enabled Metric: {Types}", string.Join(", ", enabledMetrics));
-            
+
             return new AcarsMetrics(metrics);
         });
     }
@@ -80,7 +80,7 @@ public static class AcarsServiceExtension
         ArgumentNullException.ThrowIfNull(acarsConfig.Input);
 
         var outputDictionary = CreateOutputDictionary(s, acarsConfig.Outputs);
-        
+
         var input = s.GetRequiredService<InputBuilder>().Create(acarsConfig.Input.Protocol, acarsConfig.Input.Host, acarsConfig.Input.Port);
         var acarsIoManager = new AcarsIoManager(s.GetRequiredService<ILogger<AcarsIoManager>>(), input, outputDictionary);
 
@@ -88,20 +88,20 @@ public static class AcarsServiceExtension
             s.GetRequiredService<IAcarsDatabase>(), s.GetRequiredService<IHubContext<AcarsHub>>());
     }
 
-    private static Dictionary<SourceType,List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)
+    private static Dictionary<SourceType, List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)
     {
         var outputBuilder = s.GetRequiredService<OutputBuilder>();
         var outputsTuple = acarsConfig
-            .Select(selector: a => (a.Types, outputBuilder.Create(a.Protocol, a.Host, a.Port))).ToList();
-        
+            .Select(a => (a.Types, outputBuilder.Create(a.Protocol, a.Host, a.Port))).ToList();
+
         var frameTypes = Enum.GetValues<SourceType>().ToList();
 
         var outputDictionary = frameTypes
             .ToDictionary<SourceType, SourceType, List<IOutput>>(frameType => frameType, frameType => outputsTuple.Where(b => b.Types.Contains(frameType)).Select(o => o.Item2).ToList());
-        
+
         var logger = s.GetRequiredService<ILogger<AcarsService>>();
         logger.LogInformation("{B}", string.Join(Environment.NewLine, frameTypes.Select(t => $"Sending {t} to: {string.Join(", ", outputDictionary[t].Select(f => f.EndPoint).ToList())}")));
-        
+
         return outputDictionary;
     }
 }

@@ -12,7 +12,7 @@ public class UdpInput(string host, int port) : IInput
         using var udpClient = new UdpClient(new IPEndPoint(IPAddress.Parse(host), port));
         udpClient.Client.ReceiveBufferSize = ushort.MaxValue;
         udpClient.DontFragment = false;
-        
+
         while (!cancellationToken.IsCancellationRequested)
         {
             var datagram = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);

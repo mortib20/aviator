@@ -14,9 +14,9 @@ public sealed class UdpOutput(string host, int port, ILogger<UdpOutput> logger) 
         try
         {
             _ipEndPoint ??= new IPEndPoint((await Dns.GetHostAddressesAsync(host, cancellationToken).ConfigureAwait(false))[0], port);
-            
+
             using var udpClient = new UdpClient();
-            
+
             await udpClient.SendAsync(buffer, buffer.Length, _ipEndPoint).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

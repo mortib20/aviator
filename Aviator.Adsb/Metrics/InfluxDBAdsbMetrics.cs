@@ -10,14 +10,14 @@ namespace Aviator.Adsb.Metrics;
 public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMetrics> logger) : IAdsbMetrics
 {
     private bool _disabled;
-    
+
     public async Task IncreaseAsync(AdsbStats adsbStats, CancellationToken cancellationToken = default)
     {
         if (_disabled)
         {
             return;
         }
-        
+
         try
         {
             var point = PointData.Measurement("adsb")
@@ -26,7 +26,7 @@ public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMet
                 .SetField("messagesInvalid", adsbStats.MessagesInvalid)
                 .SetField("gain", adsbStats.Gain);
 
-            await client.WritePointAsync(point, cancellationToken: cancellationToken);
+            await client.WritePointAsync(point, cancellationToken);
         }
         catch (InfluxDBApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {

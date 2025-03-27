@@ -28,7 +28,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Services.AddSerilog();
-    
+
     builder.WebHost.UseKestrel(k =>
     {
         k.ListenAnyIP(21001);
@@ -55,7 +55,7 @@ try
     });
 
     app.UseResponseCompression();
-    
+
     app.MapHub<AcarsHub>("/Acars");
     app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
 

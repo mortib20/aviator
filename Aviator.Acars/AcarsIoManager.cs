@@ -17,7 +17,10 @@ public class AcarsIoManager(ILogger<AcarsIoManager> logger, IInput input, Dictio
     public async Task WriteToTypeAsync(SourceType sourceType, byte[] buffer,
         CancellationToken cancellationToken = default)
     {
-        if (!outputs.TryGetValue(sourceType, out var outputList)) return;
+        if (!outputs.TryGetValue(sourceType, out var outputList))
+        {
+            return;
+        }
 
         foreach (var output in outputList.ToList())
         {

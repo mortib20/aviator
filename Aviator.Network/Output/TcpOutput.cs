@@ -28,7 +28,7 @@ public sealed class TcpOutput : IOutput, IDisposable
             {
                 return;
             }
-            
+
             try
             {
                 logger.LogInformation("Connecting to {A}", EndPoint);
@@ -42,7 +42,7 @@ public sealed class TcpOutput : IOutput, IDisposable
                 _logger.LogWarning(ex, "Client failed to connect or got disconnected from {Host}:{Port}, waiting for {ErrorTimeout} seconds!", _host, _port, ErrorTimeout.TotalSeconds);
             }
         };
-        
+
         _connectionTimer.Start();
     }
 
@@ -59,7 +59,7 @@ public sealed class TcpOutput : IOutput, IDisposable
         {
             return;
         }
-        
+
         try
         {
             await _client.GetStream().WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -74,7 +74,10 @@ public sealed class TcpOutput : IOutput, IDisposable
 
     private void Dispose(bool disposing)
     {
-        if (!disposing) return;
+        if (!disposing)
+        {
+            return;
+        }
 
         _client?.Dispose();
     }

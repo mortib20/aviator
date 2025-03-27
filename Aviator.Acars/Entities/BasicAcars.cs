@@ -25,7 +25,7 @@ public enum SourceType
 public enum FrameType
 {
     Undefined,
-    Acars,
+    Acars
 }
 
 public class AirFrame

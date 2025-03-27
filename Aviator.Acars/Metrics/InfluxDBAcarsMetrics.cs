@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars.Metrics;
 
-public class InfluxDBAcarsMetrics(InfluxDbMetrics client, ILogger<InfluxDBAcarsMetrics> logger): IAcarsMetrics
+public class InfluxDBAcarsMetrics(InfluxDbMetrics client, ILogger<InfluxDBAcarsMetrics> logger) : IAcarsMetrics
 {
     public async Task IncreaseAsync(AirFrame frame, CancellationToken cancellationToken = default)
     {
@@ -19,7 +19,7 @@ public class InfluxDBAcarsMetrics(InfluxDbMetrics client, ILogger<InfluxDBAcarsM
                 .SetField("noiseLevel", frame.NoiseLevel)
                 .SetField("value", 1);
 
-            await client.WritePointAsync(point, cancellationToken: cancellationToken);
+            await client.WritePointAsync(point, cancellationToken);
         }
         catch (Exception ex)
         {
