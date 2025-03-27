@@ -1,7 +1,9 @@
 using Aviator.Network.Input;
 using Aviator.Network.Output;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Aviator.Main.DependencyInjection;
+namespace Aviator.Network.DependencyInjection;
 
 public static class NetworkExtension
 {

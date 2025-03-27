@@ -1,11 +1,15 @@
 ﻿using System.Collections.ObjectModel;
-using Aviator.Adsb;
 using Aviator.Adsb.Config;
 using Aviator.Adsb.Metrics;
-using Aviator.Main.Config;
+using Aviator.Global.Config;
+using Aviator.Global.Metrics;
 using InfluxDB3.Client;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace Aviator.Main.DependencyInjection;
+namespace Aviator.Adsb.DependencyInjection;
 
 public static class AdsbServiceExtension
 {
@@ -34,7 +38,7 @@ public static class AdsbServiceExtension
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
                 var metricLogger = s.GetRequiredService<ILogger<InfluxDbAdsbMetrics>>();
-                var metric = new InfluxDbAdsbMetrics(s.GetRequiredService<InfluxDBClient>(), metricLogger);
+                var metric = new InfluxDbAdsbMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
                 metrics.Add(metric);
             }
             

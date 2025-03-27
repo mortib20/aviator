@@ -1,6 +1,9 @@
 using System.Text.Json;
 using Aviator.Acars;
-using Aviator.Main.DependencyInjection;
+using Aviator.Acars.DependencyInjection;
+using Aviator.Adsb.DependencyInjection;
+using Aviator.Global.DependencyInjection;
+using Aviator.Network.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 
@@ -11,6 +14,7 @@ if (!Directory.Exists(logPath))
     Directory.CreateDirectory(logPath);
 }
 
+// TODO put logger in config not hardcoded here
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: logFormat)
     .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)

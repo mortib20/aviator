@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj" />
         <ProjectReference Include="..\Aviator.Network\Aviator.Network.csproj"/>
     </ItemGroup>
 </Project>

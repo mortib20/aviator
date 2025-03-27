@@ -4,5 +4,5 @@ namespace Aviator.Adsb.Metrics;
 
 public interface IAdsbMetrics
 {
-    public Task IncreaseAsync(AdsbStats adsbStats, CancellationToken cancellationToken);
+    public Task IncreaseAsync(AdsbStats adsbStats, CancellationToken cancellationToken = default);
 }

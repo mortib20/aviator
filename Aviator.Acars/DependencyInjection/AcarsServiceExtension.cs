@@ -1,16 +1,19 @@
 using System.Collections.ObjectModel;
-using Aviator.Acars;
 using Aviator.Acars.Config;
 using Aviator.Acars.Database;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Metrics;
-using Aviator.Main.Config;
+using Aviator.Global.Config;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
 using InfluxDB3.Client;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace Aviator.Main.DependencyInjection;
+namespace Aviator.Acars.DependencyInjection;
 
 public static class AcarsServiceExtension
 {

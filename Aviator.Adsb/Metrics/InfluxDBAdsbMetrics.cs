@@ -1,12 +1,13 @@
 ﻿using System.Net;
 using Aviator.Adsb.Entities;
+using Aviator.Global.Metrics;
 using InfluxDB3.Client;
 using InfluxDB3.Client.Write;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Adsb.Metrics;
 
-public class InfluxDbAdsbMetrics(InfluxDBClient client, ILogger<InfluxDbAdsbMetrics> logger) : IAdsbMetrics
+public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMetrics> logger) : IAdsbMetrics
 {
     private bool _disabled;
     
