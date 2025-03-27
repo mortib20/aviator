@@ -4,7 +4,7 @@ using System.Text.Json;
 using Aviator.Acars.Entities.Hfdl;
 using Aviator.Acars.Entities.Vdl2;
 
-namespace Aviator.Acars.Entities;
+namespace Aviator.Acars.Entities.Converter;
 
 public abstract class AirFrameConverter
 {

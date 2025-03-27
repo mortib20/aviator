@@ -1,8 +1,9 @@
+using System.Text;
 using Aviator.Acars.Config;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace Aviator.Acars.Database;
+namespace Aviator.Acars.Database.Implementation;
 
 public class AcarsMongoDatabase(MongoDbConfig config) : IAcarsDatabase
 {
@@ -18,7 +19,7 @@ public class AcarsMongoDatabase(MongoDbConfig config) : IAcarsDatabase
 
     public async Task InsertAsync(byte[] bytes, CancellationToken cancellationToken = default)
     {
-        var byteString = System.Text.Encoding.Default.GetString(bytes);
+        var byteString = Encoding.Default.GetString(bytes);
         await SaveAcarsAsBsonAsync(byteString, cancellationToken).ConfigureAwait(false);
     }
 }

@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Text.Json;
 using Aviator.Acars.Entities.Hfdl;
 using Aviator.Acars.Entities.Vdl2;
-using Type = Aviator.Acars.Entities.Hfdl.Type;
 
 namespace Aviator.Acars.Entities;
 

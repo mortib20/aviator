@@ -3,7 +3,6 @@ using Aviator.Adsb.Config;
 using Aviator.Adsb.Metrics;
 using Aviator.Global.Config;
 using Aviator.Global.Metrics;
-using InfluxDB3.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

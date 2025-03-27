@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aviator.Acars.Database;
 using Aviator.Acars.Entities;
+using Aviator.Acars.Entities.Converter;
 using Aviator.Acars.Metrics;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
