@@ -1,6 +1,4 @@
-﻿using Aviator.Main.Config;
-
-namespace Aviator.Global.Config;
+﻿namespace Aviator.Global.Config;
 
 public class MetricsConfig
 {

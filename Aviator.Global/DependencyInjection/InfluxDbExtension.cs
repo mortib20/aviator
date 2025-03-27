@@ -1,6 +1,5 @@
 ﻿using Aviator.Global.Config;
 using Aviator.Global.Metrics;
-using Aviator.Main.Config;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 

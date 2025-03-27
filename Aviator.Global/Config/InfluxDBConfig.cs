@@ -1,4 +1,4 @@
-namespace Aviator.Main.Config;
+namespace Aviator.Global.Config;
 
 public class InfluxDbConfig
 {

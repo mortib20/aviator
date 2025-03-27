@@ -5,6 +5,7 @@ using Aviator.Acars.Database.Implementation;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Metrics;
 using Aviator.Global.Config;
+using Aviator.Global.Metrics;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
 using InfluxDB3.Client;
@@ -43,7 +44,7 @@ public static class AcarsServiceExtension
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
                 var metricLogger = s.GetRequiredService<ILogger<InfluxDBAcarsMetrics>>();
-                var metric = new InfluxDBAcarsMetrics(s.GetRequiredService<InfluxDBClient>(), metricLogger);
+                var metric = new InfluxDBAcarsMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
                 metrics.Add(metric);
             }
             
