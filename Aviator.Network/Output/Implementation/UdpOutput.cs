@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Network.Output;
+namespace Aviator.Network.Output.Implementation;
 
 public sealed class UdpOutput(string host, int port, ILogger<UdpOutput> logger) : IOutput
 {

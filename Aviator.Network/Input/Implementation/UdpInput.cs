@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Aviator.Network.Input;
+namespace Aviator.Network.Input.Implementation;
 
 public class UdpInput(string host, int port) : IInput
 {

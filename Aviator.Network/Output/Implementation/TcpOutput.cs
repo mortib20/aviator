@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Timer = System.Timers.Timer;
 
-namespace Aviator.Network.Output;
+namespace Aviator.Network.Output.Implementation;
 
 public sealed class TcpOutput : IOutput, IDisposable
 {

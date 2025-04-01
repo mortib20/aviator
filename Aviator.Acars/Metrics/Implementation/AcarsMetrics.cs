@@ -1,6 +1,6 @@
 using Aviator.Acars.Entities;
 
-namespace Aviator.Acars.Metrics;
+namespace Aviator.Acars.Metrics.Implementation;
 
 public class AcarsMetrics(ICollection<IAcarsMetrics> metricsList) : IAcarsMetrics
 {

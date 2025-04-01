@@ -1,11 +1,9 @@
-﻿using System.Net;
-using Aviator.Adsb.Entities;
-using Aviator.Global.Metrics;
-using InfluxDB3.Client;
+﻿using Aviator.Adsb.Entities;
+using Aviator.Global.Metrics.Implementation;
 using InfluxDB3.Client.Write;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Adsb.Metrics;
+namespace Aviator.Adsb.Metrics.Implementation;
 
 public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMetrics> logger) : IAdsbMetrics
 {

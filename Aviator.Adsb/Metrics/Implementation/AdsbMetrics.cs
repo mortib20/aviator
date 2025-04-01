@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Aviator.Adsb.Entities;
 
-namespace Aviator.Adsb.Metrics;
+namespace Aviator.Adsb.Metrics.Implementation;
 
 public class AdsbMetrics(Collection<IAdsbMetrics> metricsList) : IAdsbMetrics
 {

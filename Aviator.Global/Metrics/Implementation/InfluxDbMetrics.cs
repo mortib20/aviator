@@ -6,9 +6,9 @@ using InfluxDB3.Client.Write;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Aviator.Global.Metrics;
+namespace Aviator.Global.Metrics.Implementation;
 
-public class InfluxDbMetrics(ILogger<InfluxDbMetrics> logger, IOptions<InfluxDbConfig> influxDbConfig)
+public class InfluxDbMetrics(ILogger<InfluxDbMetrics> logger, IOptions<InfluxDbConfig> influxDbConfig) : IMetrics
 {
     private readonly InfluxDBClient _influxDbClient = SetupClient(influxDbConfig.Value);
     private bool _disabled;

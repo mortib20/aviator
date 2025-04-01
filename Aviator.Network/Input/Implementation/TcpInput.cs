@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Network.Input;
+namespace Aviator.Network.Input.Implementation;
 
 public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
 {

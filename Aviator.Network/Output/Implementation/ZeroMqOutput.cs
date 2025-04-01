@@ -2,7 +2,7 @@
 using NetMQ;
 using NetMQ.Sockets;
 
-namespace Aviator.Network.Output;
+namespace Aviator.Network.Output.Implementation;
 
 public class ZeroMqOutput(string host, int port, ILogger<ZeroMqOutput> logger) : IOutput
 {

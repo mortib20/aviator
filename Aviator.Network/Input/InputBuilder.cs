@@ -1,3 +1,4 @@
+using Aviator.Network.Input.Implementation;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Network.Input;

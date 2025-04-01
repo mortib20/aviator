@@ -1,9 +1,9 @@
 using Aviator.Acars.Entities;
-using Aviator.Global.Metrics;
+using Aviator.Global.Metrics.Implementation;
 using InfluxDB3.Client.Write;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Acars.Metrics;
+namespace Aviator.Acars.Metrics.Implementation;
 
 public class InfluxDbAcarsMetrics(InfluxDbMetrics client, ILogger<InfluxDbAcarsMetrics> logger) : IAcarsMetrics
 {

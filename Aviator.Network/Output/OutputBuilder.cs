@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Aviator.Network.Output.Implementation;
+using Microsoft.Extensions.Logging;
 
 namespace Aviator.Network.Output;
 
