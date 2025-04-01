@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars.Metrics;
 
-public class InfluxDBAcarsMetrics(InfluxDbMetrics client, ILogger<InfluxDBAcarsMetrics> logger) : IAcarsMetrics
+public class InfluxDbAcarsMetrics(InfluxDbMetrics client, ILogger<InfluxDbAcarsMetrics> logger) : IAcarsMetrics
 {
     public async Task IncreaseAsync(AirFrame frame, CancellationToken cancellationToken = default)
     {

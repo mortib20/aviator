@@ -1,8 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
-using Aviator.Acars.Entities.Hfdl;
-using Aviator.Acars.Entities.Vdl2;
+using Aviator.Acars.Entities.Decoders.Acars;
+using Aviator.Acars.Entities.Decoder.Hfdl;
+using Aviator.Acars.Entities.Decoder.Vdl2;
+using Aviator.Acars.Entities.Decoders.Iridium;
 
 namespace Aviator.Acars.Entities;
 
@@ -13,7 +15,7 @@ public abstract class AcarsConverter
         switch (sourceType)
         {
             case SourceType.Aero:
-                var jaero = JsonSerializer.Deserialize<Aero.Aero>(buffer);
+                var jaero = JsonSerializer.Deserialize<Decoders.Aero.Aero>(buffer);
                 if (jaero is null)
                 {
                     break;
@@ -77,7 +79,7 @@ public abstract class AcarsConverter
         return num;
     }
 
-    private static BasicAcars ConvertAero(Aero.Aero aero)
+    private static BasicAcars ConvertAero(Decoders.Aero.Aero aero)
     {
         return new BasicAcars
         {

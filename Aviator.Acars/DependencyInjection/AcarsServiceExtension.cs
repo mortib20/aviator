@@ -8,7 +8,6 @@ using Aviator.Global.Config;
 using Aviator.Global.Metrics;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
-using InfluxDB3.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -43,8 +42,8 @@ public static class AcarsServiceExtension
 
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
-                var metricLogger = s.GetRequiredService<ILogger<InfluxDBAcarsMetrics>>();
-                var metric = new InfluxDBAcarsMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
+                var metricLogger = s.GetRequiredService<ILogger<InfluxDbAcarsMetrics>>();
+                var metric = new InfluxDbAcarsMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
                 metrics.Add(metric);
             }
 
