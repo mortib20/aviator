@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Adsb;
 
+// TODO Better Error Handling and Rename?
 public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverterService> logger, IAdsbMetrics metrics, AdsbConfig config) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

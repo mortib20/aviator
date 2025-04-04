@@ -4,13 +4,15 @@ using Aviator.Acars.Database;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Entities.Converter;
 using Aviator.Acars.Metrics;
+using Aviator.Acars.Network;
+using Aviator.Acars.Network.Implementation;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars;
 
-public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager, IAcarsMetrics metrics, IAcarsDatabase database, IHubContext<AcarsHub> acarsHub)
+public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager inputManager, IAcarsOutputManager outputManager, IAcarsMetrics metrics, IAcarsDatabase database, IHubContext<AcarsHub> acarsHub)
     : BackgroundService
 {
     private const int MinBytes = 128;
@@ -21,7 +23,7 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
 
         try
         {
-            await ioManager.StartInputAsync(OnReceivedAsync, stoppingToken).ConfigureAwait(false);
+            await inputManager.StartInputAsync(OnReceivedAsync, stoppingToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -69,7 +71,7 @@ public class AcarsService(ILogger<AcarsService> logger, AcarsIoManager ioManager
 
         try
         {
-            await ioManager.WriteToTypeAsync(sourceType, bytes, cancellationToken).ConfigureAwait(false);
+            await outputManager.WriteToTypeAsync(sourceType, bytes, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

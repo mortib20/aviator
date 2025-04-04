@@ -5,6 +5,7 @@ using Aviator.Acars.Database.Implementation;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Metrics;
 using Aviator.Acars.Metrics.Implementation;
+using Aviator.Acars.Network.Implementation;
 using Aviator.Global.Config;
 using Aviator.Global.Metrics;
 using Aviator.Global.Metrics.Implementation;
@@ -83,9 +84,10 @@ public static class AcarsServiceExtension
         var outputDictionary = CreateOutputDictionary(s, acarsConfig.Outputs);
 
         var input = s.GetRequiredService<InputBuilder>().Create(acarsConfig.Input.Protocol, acarsConfig.Input.Host, acarsConfig.Input.Port);
-        var acarsIoManager = new AcarsIoManager(s.GetRequiredService<ILogger<AcarsIoManager>>(), input, outputDictionary);
-
-        return new AcarsService(s.GetRequiredService<ILogger<AcarsService>>(), acarsIoManager, s.GetRequiredService<IAcarsMetrics>(),
+        var acarsInputManager = new AcarsInputManager(s.GetRequiredService<ILogger<AcarsInputManager>>(), input);
+        var acarsOutputManager = new AcarsOutputManager(s.GetRequiredService<ILogger<AcarsOutputManager>>(), outputDictionary);
+        
+        return new AcarsService(s.GetRequiredService<ILogger<AcarsService>>(), acarsInputManager, acarsOutputManager, s.GetRequiredService<IAcarsMetrics>(),
             s.GetRequiredService<IAcarsDatabase>(), s.GetRequiredService<IHubContext<AcarsHub>>());
     }
 
