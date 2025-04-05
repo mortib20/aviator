@@ -28,7 +28,6 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
                     continue;
                 }
 
-                logger.LogInformation("Test {C}", bytes.Length);
                 await HandleAirFrame(bytes, stoppingToken).ConfigureAwait(false);
             }
 
