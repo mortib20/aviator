@@ -1,8 +1,10 @@
-﻿using Aviator.Network.Input;
+﻿using System.Threading.Channels;
 
 namespace Aviator.Acars.Network;
 
 public interface IAcarsInputManager
 {
-    Task StartInputAsync(InputHandler onReceivedAsync, CancellationToken cancellationToken = default);
+    ChannelReader<byte[]> ChannelReader { get; }
+    
+    Task StartAsync(CancellationToken cancellationToken = default);
 }

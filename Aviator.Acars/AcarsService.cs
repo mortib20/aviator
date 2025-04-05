@@ -14,28 +14,38 @@ namespace Aviator.Acars;
 public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager inputManager, IAcarsOutputManager outputManager, IAcarsMetrics metrics, IAcarsDatabase database, IHubContext<AcarsHub> acarsHub)
     : AviatorBackgroundService(logger)
 {
-    private const int MinBytes = 128;
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await inputManager.StartInputAsync(OnReceivedAsync, stoppingToken).ConfigureAwait(false);
+            var inputTask = inputManager.StartAsync(stoppingToken);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                if (!inputManager.ChannelReader.TryRead(out var bytes))
+                {
+                    await Task.Delay(1, stoppingToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                logger.LogInformation("Test {C}", bytes.Length);
+                await HandleAirFrame(bytes, stoppingToken).ConfigureAwait(false);
+            }
+
+            await inputTask;
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error occured while running Input");
+            logger.LogError(ex, "Error occured while running Input...");
         }
     }
 
-    private async Task OnReceivedAsync(byte[] bytes, CancellationToken cancellationToken)
+    private async Task HandleAirFrame(byte[] bytes, CancellationToken cancellationToken)
     {
-        if (bytes.Length < MinBytes)
-        {
-            logger.LogWarning("Received payload to small!");
-            return;
-        }
-
         JsonNode jsonAcars;
         try
         {

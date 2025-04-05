@@ -1,6 +1,6 @@
 namespace Aviator.Network.Input;
 
-public delegate Task InputHandler(byte[] input, CancellationToken cancel = default);
+public delegate Task InputHandler(byte[] input, CancellationToken cancellationToken = default);
 
 public interface IInput
 {
