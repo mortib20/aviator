@@ -1,13 +1,13 @@
 ﻿using Aviator.Adsb.Config;
 using Aviator.Adsb.Entities;
 using Aviator.Adsb.Metrics;
-using Microsoft.Extensions.Hosting;
+using Aviator.Global.Service;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Adsb;
 
 // TODO Better Error Handling and Rename?
-public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverterService> logger, IAdsbMetrics metrics, AdsbConfig config) : BackgroundService
+public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverterService> logger, IAdsbMetrics metrics, AdsbConfig config) : AviatorBackgroundService(logger)
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

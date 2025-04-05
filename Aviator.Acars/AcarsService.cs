@@ -5,22 +5,19 @@ using Aviator.Acars.Entities;
 using Aviator.Acars.Entities.Converter;
 using Aviator.Acars.Metrics;
 using Aviator.Acars.Network;
-using Aviator.Acars.Network.Implementation;
+using Aviator.Global.Service;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars;
 
 public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager inputManager, IAcarsOutputManager outputManager, IAcarsMetrics metrics, IAcarsDatabase database, IHubContext<AcarsHub> acarsHub)
-    : BackgroundService
+    : AviatorBackgroundService(logger)
 {
     private const int MinBytes = 128;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Starting {This}", this);
-
         try
         {
             await inputManager.StartInputAsync(OnReceivedAsync, stoppingToken).ConfigureAwait(false);

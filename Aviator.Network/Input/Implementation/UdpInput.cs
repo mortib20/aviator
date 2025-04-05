@@ -15,8 +15,15 @@ public class UdpInput(string host, int port) : IInput
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var datagram = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-            await onReceive.Invoke(datagram.Buffer, cancellationToken);
+            try
+            {
+                var datagram = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                await onReceive.Invoke(datagram.Buffer, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore
+            }
         }
     }
 

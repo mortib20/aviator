@@ -13,18 +13,23 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
     public async Task ReceiveAsync(InputHandler onReceive, CancellationToken cancellationToken = default)
     {
         using var tcpListener = new TcpListener(IPAddress.Parse(host), port);
-
+        
         tcpListener.Start();
-
+        
         while (!cancellationToken.IsCancellationRequested)
         {
-            var tcpClient = await tcpListener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var tcpClient = await tcpListener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
 
-            _ = Task.Run(
-                async () => await HandleClientAsync(onReceive, tcpClient, cancellationToken).ConfigureAwait(false),
-                cancellationToken);
+                _ = Task.Run(async () => await HandleClientAsync(onReceive, tcpClient, cancellationToken).ConfigureAwait(false), cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore
+            }
         }
-
+        
         tcpListener.Stop();
     }
 
