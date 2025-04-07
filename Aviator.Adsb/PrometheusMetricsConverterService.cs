@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Adsb;
 
-// TODO Better Error Handling and Rename?
+// TODO Better Error Handling and Rename? and also get more stats (Total Aircraft should be split into different modes ADSB, MLAT and ADSB over Sat)
 public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverterService> logger, IAdsbMetrics metrics, AdsbConfig config) : AviatorBackgroundService(logger)
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
