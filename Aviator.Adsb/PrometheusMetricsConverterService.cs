@@ -44,15 +44,15 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
         if (!Path.Exists(statsPath))
         {
             logger.LogWarning("Directory {Directory} does not exist...", statsPath);
-            return true;
+            return false;
         }
 
         if (!File.Exists(config.StatsPath))
         {
             logger.LogWarning("File {File} does not exist...", statsFile);
-            return true;
+            return false;
         }
 
-        return false;
+        return true;
     }
 }

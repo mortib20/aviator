@@ -19,8 +19,6 @@ public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMet
             {
                 point.SetField(keyValuePair.Key, keyValuePair.Value);
             }
-            
-            logger.LogDebug("{LineProtocol}", point.ToLineProtocol());
 
             await client.WritePointAsync(point, cancellationToken);
         }
