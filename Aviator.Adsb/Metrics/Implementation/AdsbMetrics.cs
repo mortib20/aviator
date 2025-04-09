@@ -5,7 +5,7 @@ namespace Aviator.Adsb.Metrics.Implementation;
 
 public class AdsbMetrics(Collection<IAdsbMetrics> metricsList) : IAdsbMetrics
 {
-    public async Task IncreaseAsync(Dictionary<string, string> adsbStats, CancellationToken cancellationToken = default)
+    public async Task IncreaseAsync(Dictionary<string, decimal> adsbStats, CancellationToken cancellationToken = default)
     {
         foreach (var adsbMetricse in metricsList)
         {

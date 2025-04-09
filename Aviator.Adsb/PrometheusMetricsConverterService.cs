@@ -1,4 +1,5 @@
-﻿using Aviator.Adsb.Config;
+﻿using System.Globalization;
+using Aviator.Adsb.Config;
 using Aviator.Adsb.Entities;
 using Aviator.Adsb.Metrics;
 using Aviator.Global.Service;
@@ -14,7 +15,7 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
         var statsPath = Path.GetDirectoryName(config.StatsPath);
         var statsFile = Path.GetFileName(config.StatsPath);
 
-        logger.LogInformation("Starting {Type} and watching {Path} {File}", this, statsPath, statsFile);
+        logger.LogInformation("Watching {Path} {File}", statsPath, statsFile);
 
         try
         {
@@ -25,7 +26,7 @@ public class PrometheusMetricsConverterService(ILogger<PrometheusMetricsConverte
                     var fileLines = await File.ReadAllLinesAsync(config.StatsPath, stoppingToken).ConfigureAwait(false);
 
                     // Split stats<SPACE>value
-                    var metricsDict = fileLines.Select(fileLine => fileLine.Split(' ')).ToDictionary(metric => metric[0], metric => metric[1]);
+                    var metricsDict = fileLines.Select(fileLine => fileLine.Split(' ')).ToDictionary(metric => metric[0], metric => decimal.Parse(metric[1]));
 
                     await metrics.IncreaseAsync(metricsDict, stoppingToken).ConfigureAwait(false);
                 }
