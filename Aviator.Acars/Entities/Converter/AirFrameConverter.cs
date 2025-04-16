@@ -10,7 +10,7 @@ namespace Aviator.Acars.Entities.Converter;
 
 public abstract class AirFrameConverter
 {
-    public static AirFrame? FromType(byte[] buffer, [DisallowNull] SourceType? frameType)
+    public static AirFrame? FromType(byte[] buffer, SourceType frameType)
     {
         switch (frameType)
         {

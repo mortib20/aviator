@@ -19,6 +19,11 @@ public static class AdsbServiceExtension
         var adsbConfig = builder.Configuration.GetSection(AdsbConfig.Section).Get<AdsbConfig>();
         ArgumentNullException.ThrowIfNull(adsbConfig);
 
+        if (!adsbConfig.Enabled)
+        {
+            return builder;
+        }
+
         var metricsConfig = builder.Configuration.GetSection(MetricsConfig.Section).Get<MetricsConfig>();
         ArgumentNullException.ThrowIfNull(metricsConfig);
 

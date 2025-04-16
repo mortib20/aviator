@@ -6,7 +6,7 @@ namespace Aviator.Acars.Network.Implementation;
 
 public class AcarsOutputManager(ILogger<AcarsOutputManager> logger, Dictionary<SourceType, List<IOutput>> outputs) : IAcarsOutputManager
 {
-    public async Task WriteToTypeAsync(SourceType sourceType, byte[] buffer,
+    public async Task SendToOutputOfTypeAsync(SourceType sourceType, byte[] buffer,
         CancellationToken cancellationToken = default)
     {
         if (!outputs.TryGetValue(sourceType, out var outputList))
@@ -15,9 +15,16 @@ public class AcarsOutputManager(ILogger<AcarsOutputManager> logger, Dictionary<S
             return;
         }
 
-        foreach (var output in outputList.ToList())
+        try
         {
-            await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            foreach (var output in outputList.ToList())
+            {
+                await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error occured while trying to send to output of {AcarsType}", sourceType);
         }
     }
 }
