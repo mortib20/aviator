@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Aviator.Acars.Entities;
 
-namespace Aviator.Acars.Utils;
+namespace Aviator.Acars.Handlers.Parsers;
 
 public static class AirframeParser
 {

@@ -3,11 +3,12 @@ using Aviator.Acars.Config;
 using Aviator.Acars.Database;
 using Aviator.Acars.Database.Implementation;
 using Aviator.Acars.Entities;
+using Aviator.Acars.Handlers;
+using Aviator.Acars.Handlers.PositionStuff;
 using Aviator.Acars.Metrics;
 using Aviator.Acars.Metrics.Implementation;
 using Aviator.Acars.Network.Implementation;
 using Aviator.Global.Config;
-using Aviator.Global.Metrics;
 using Aviator.Global.Metrics.Implementation;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
@@ -31,6 +32,10 @@ public static class AcarsServiceExtension
 
         SetupMetrics(builder, metricsConfig);
         SetupDatabases(builder, acarsConfig);
+
+        // State
+        builder.Services.AddSingleton<AcarsPositionState>();
+        
         builder.Services.AddHostedService<AcarsService>(s => SetupAcarsService(s, acarsConfig));
 
         return builder;
@@ -86,9 +91,10 @@ public static class AcarsServiceExtension
         var input = s.GetRequiredService<InputBuilder>().Create(acarsConfig.Input.Protocol, acarsConfig.Input.Host, acarsConfig.Input.Port);
         var acarsInputManager = new AcarsInputManager(s.GetRequiredService<ILogger<AcarsInputManager>>(), input);
         var acarsOutputManager = new AcarsOutputManager(s.GetRequiredService<ILogger<AcarsOutputManager>>(), outputDictionary);
+
+        var basicAcarsHandler = new BasicAcarsHandler(s.GetRequiredService<ILogger<BasicAcarsHandler>>(), acarsOutputManager, s.GetRequiredService<IAcarsDatabase>());
         
-        return new AcarsService(s.GetRequiredService<ILogger<AcarsService>>(), acarsInputManager, acarsOutputManager, s.GetRequiredService<IAcarsMetrics>(),
-            s.GetRequiredService<IAcarsDatabase>(), s.GetRequiredService<IHubContext<AcarsHub>>());
+        return new AcarsService(s.GetRequiredService<ILogger<AcarsService>>(), acarsInputManager, s.GetRequiredService<IAcarsMetrics>(), s.GetRequiredService<IHubContext<AcarsHub>>(), basicAcarsHandler, s.GetRequiredService<AcarsPositionState>());
     }
 
     private static Dictionary<SourceType, List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)

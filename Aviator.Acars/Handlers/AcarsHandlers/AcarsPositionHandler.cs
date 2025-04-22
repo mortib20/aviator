@@ -1,4 +1,4 @@
-namespace Aviator.Acars.Handlers;
+namespace Aviator.Acars.Handlers.AcarsHandlers;
 
 public class AcarsPositionHandler
 {

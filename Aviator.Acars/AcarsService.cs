@@ -1,19 +1,18 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using Aviator.Acars.Database;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Entities.Converter;
+using Aviator.Acars.Handlers;
+using Aviator.Acars.Handlers.Parsers;
+using Aviator.Acars.Handlers.PositionStuff;
 using Aviator.Acars.Metrics;
 using Aviator.Acars.Network;
-using Aviator.Acars.Utils;
 using Aviator.Global.Service;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars;
 
-public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager inputManager, IAcarsOutputManager outputManager, IAcarsMetrics metrics, IAcarsDatabase database, IHubContext<AcarsHub> acarsHub)
+public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager inputManager, IAcarsMetrics metrics, IHubContext<AcarsHub> acarsHub, BasicAcarsHandler basicAcarsHandler, AcarsPositionState acarsPositionState)
     : AviatorBackgroundService(logger)
 {
 
@@ -48,23 +47,28 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
 
     private async Task HandleBytes(byte[] bytes, CancellationToken cancellationToken)
     {
-        if (AirframeParser.TryParseBytesToJson(bytes, out var jsonAcars))
+        if (!AirframeParser.TryParseBytesToJson(bytes, out var jsonAcars))
         {
+            logger.LogInformation("Failed to parse bytes to json.");
             return;
         }
         
-        if (AirframeParser.TryGetSourceType(jsonAcars, out var sourceType))
+        if (!AirframeParser.TryGetSourceType(jsonAcars, out var sourceType))
         {
+            logger.LogInformation("Failed to get SourceType.");
+            return;
+        }
+
+        if (sourceType is null)
+        {
+            logger.LogInformation("SourceType was null.");
             return;
         }
         
+        await basicAcarsHandler.HandleAsync(bytes, (SourceType)sourceType, cancellationToken).ConfigureAwait(false);
         
-
-        await outputManager.SendToOutputOfTypeAsync((SourceType)sourceType!, bytes, cancellationToken).ConfigureAwait(false);
-
-        await InsertIntoDatabaseAsync(bytes, cancellationToken);
-
         // Advanced handling below...
+
         
         var airFrame = AirFrameConverter.FromType(bytes, (SourceType)sourceType!);
 
@@ -84,30 +88,13 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
         {
             var basicAcars = AcarsConverter.BasicAcarsFromType(bytes, airFrame.SourceType);
             await acarsHub.Clients.All.SendAsync("receiveAcarsFrame", JsonSerializer.Serialize(basicAcars), cancellationToken).ConfigureAwait(false);
-        }
-    }
 
-    private async Task InsertIntoDatabaseAsync(byte[] bytes, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await database.InsertAsync(bytes, cancellationToken).ConfigureAwait(false);
+            if (Position.HasAdscPosition(jsonAcars))
+            {
+                var position = Position.FromAcarsFrame(jsonAcars);
+                logger.LogInformation("Got a position {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
+                //await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
+            }
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to save bytes in database!");
-        }
-    }
-
-    private static void WriteInvalidJsonToFile(byte[] bytes)
-    {
-        var logPath = Path.Combine(Environment.CurrentDirectory, "logs/json");
-        if (!Directory.Exists(logPath))
-        {
-            Directory.CreateDirectory(logPath);
-        }
-
-        var filename = $"{DateTime.Now:s}.json";
-        File.WriteAllBytes(Path.Combine(logPath, filename), bytes);
     }
 }
