@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace Aviator.Acars.Handlers.PositionStuff;
 
@@ -8,7 +9,7 @@ public class Position
     public decimal Lat { get; set; }
     public decimal Lon { get; set; }
     public int Alt { get; set; }
-    public DateTime DateTime = DateTime.Now;
+    public DateTimeOffset DateTime { get; set; } = DateTimeOffset.Now;
 
     public static bool HasAdscPosition(JsonNode json)
     {
@@ -41,7 +42,7 @@ public class Position
             Lat = basic_report["lat"].GetValue<decimal>(),
             Lon = basic_report["lon"].GetValue<decimal>(),
             Alt = basic_report["alt"].GetValue<int>(),
-            DateTime = DateTime.Now
+            DateTime = DateTimeOffset.Now
         };
     }
     
@@ -59,7 +60,7 @@ public class Position
             Lat = acLocation["loc"]["lat"].GetValue<decimal>(),
             Lon = acLocation["loc"]["lon"].GetValue<decimal>(),
             Alt = acLocation["alt"].GetValue<int>(),
-            DateTime = DateTime.Now
+            DateTime = DateTimeOffset.Now
         };
     }
 }
