@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Entities.Converter;
+using Aviator.Acars.Entities.Decoder.Hfdl;
 using Aviator.Acars.Handlers;
 using Aviator.Acars.Handlers.Parsers;
 using Aviator.Acars.Handlers.PositionStuff;
@@ -76,25 +77,35 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
         {
             return;
         }
-
+        
         if (FrameTypeFinder.HasAcars(jsonAcars))
         {
             airFrame.FrameType = FrameType.Acars;
-        }
-
-        await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
-
-        if (airFrame.FrameType == FrameType.Acars)
-        {
+            
             var basicAcars = AcarsConverter.BasicAcarsFromType(bytes, airFrame.SourceType);
             await acarsHub.Clients.All.SendAsync("receiveAcarsFrame", JsonSerializer.Serialize(basicAcars), cancellationToken).ConfigureAwait(false);
 
             if (Position.HasAdscPosition(jsonAcars))
             {
-                var position = Position.FromAcarsFrame(jsonAcars);
-                logger.LogInformation("Got a position {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
+                var position = Position.FromAcarsAdscFrame(jsonAcars);
+                logger.LogInformation("Got a position adsc {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
                 await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
             }
         }
+
+        if (FrameTypeFinder.HasXid(jsonAcars))
+        {
+            airFrame.FrameType = FrameType.Xid;
+            logger.LogInformation("xid");
+
+            if (Position.HasXidPosition(jsonAcars))
+            {
+                var position = Position.FromXidAcLocationFrame(jsonAcars);
+                logger.LogInformation("Got a position xid {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
+                await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
     }
 }

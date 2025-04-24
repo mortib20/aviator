@@ -13,4 +13,10 @@ public static class FrameTypeFinder
         var iridium = json["acars"]?["text"] is not null;
         return vdl2 || hfdl || jaero || acars || iridium;
     }
+
+    public static bool HasXid(JsonNode json)
+    {
+        var vdl2 = json["vdl2"]?["avlc"]?["xid"] is not null;
+        return vdl2;
+    }
 }

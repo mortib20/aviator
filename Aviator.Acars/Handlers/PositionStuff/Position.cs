@@ -12,11 +12,19 @@ public class Position
 
     public static bool HasAdscPosition(JsonNode json)
     {
-        var tags = json["vdl2"]?["avlc"]?["acars"]?["arinc622"]?["adsc"]?["tags"]?.AsArray();
-        return tags?.OfType<JsonObject>().FirstOrDefault(s => s.ContainsKey("basic_report")) is not null;
+        var tags = json["vdl2"]?["avlc"]?["acars"]?["arinc622"]?["adsc"]?["tags"]?.AsArray().OfType<JsonObject>();
+        return tags?.FirstOrDefault(s => s.ContainsKey("basic_report")) is not null;
+    }
+
+    public static bool HasXidPosition(JsonNode json)
+    {
+        var xid = json["vdl2"]?["avlc"]?["xid"];
+        var vdlParams = xid?["vdl_params"]?.AsArray().OfType<JsonObject>()
+            .ToDictionary(k => k["name"].GetValue<string>(), v => v["value"]);
+        return vdlParams?.ContainsKey("ac_location") is not false;
     }
     
-    public static Position FromAcarsFrame(JsonNode json)
+    public static Position FromAcarsAdscFrame(JsonNode json)
     {
         var arinc = json["vdl2"]["avlc"]["acars"]["arinc622"];
         var tags = arinc?["adsc"]?["tags"]?.AsArray();
@@ -25,7 +33,7 @@ public class Position
             .SelectMany(tag => tag)
             .Where(kvp => kvp.Key == "basic_report")
             .Select(kvp => kvp.Value as JsonObject)
-            .FirstOrDefault();;
+            .FirstOrDefault();
 
         return new Position
         {
@@ -33,6 +41,27 @@ public class Position
             Lat = basic_report["lat"].GetValue<decimal>(),
             Lon = basic_report["lon"].GetValue<decimal>(),
             Alt = basic_report["alt"].GetValue<int>(),
+            ReportTime = DateTimeOffset.Now
+        };
+    }
+    
+    public static Position FromXidAcLocationFrame(JsonNode json)
+    {
+        var xid = json["vdl2"]?["avlc"]?["xid"];
+        var addr = json["vdl2"]?["avlc"]?["src"]?["addr"]?.GetValue<string>();
+        var vdlParams = xid?["vdl_params"]?.AsArray().OfType<JsonObject>()
+            .ToDictionary(k => k["name"].GetValue<string>(), v => v["value"]);
+        var acLocation = vdlParams["ac_location"].AsObject();
+        var loc = acLocation.ToString();
+
+        Console.WriteLine(loc);
+        
+        return new Position
+        {
+            Reg = addr,
+            Lat = acLocation["loc"]["lat"].GetValue<decimal>(),
+            Lon = acLocation["loc"]["lon"].GetValue<decimal>(),
+            Alt = acLocation["alt"].GetValue<int>(),
             ReportTime = DateTimeOffset.Now
         };
     }
