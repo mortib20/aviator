@@ -5,12 +5,10 @@ namespace Aviator.Acars;
 
 public class AcarsHub(AcarsPositionState acarsPositionState) : Hub
 {
-    public async Task SubscribeToPositions()
+    public async Task<List<Position>> SubscribeToPositions()
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, "Positions").ConfigureAwait(false);
+        await Groups.AddToGroupAsync(Context.ConnectionId, "Position").ConfigureAwait(false);
 
-        var positions = acarsPositionState.Positions;
-
-        await Clients.Caller.SendAsync("Positions", positions).ConfigureAwait(false);
+        return acarsPositionState.Positions;
     }
 }

@@ -10,6 +10,6 @@ public class AcarsPositionState(IHubContext<AcarsHub> acarsHub)
     {
         Positions.Add(position);
 
-        await acarsHub.Clients.Group("Positions").SendAsync("Positions", Positions, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await acarsHub.Clients.Group("Position").SendAsync("Position", position, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 }
