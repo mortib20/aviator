@@ -33,7 +33,7 @@ public class Position
             Lat = basic_report["lat"].GetValue<decimal>(),
             Lon = basic_report["lon"].GetValue<decimal>(),
             Alt = basic_report["alt"].GetValue<int>(),
-            ReportTime = default
+            ReportTime = DateTimeOffset.Now
         };
     }
 }
