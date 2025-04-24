@@ -93,7 +93,7 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
             {
                 var position = Position.FromAcarsFrame(jsonAcars);
                 logger.LogInformation("Got a position {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
-                //await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
+                await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
             }
         }
     }
