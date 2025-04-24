@@ -8,7 +8,7 @@ public class Position
     public decimal Lat { get; set; }
     public decimal Lon { get; set; }
     public int Alt { get; set; }
-    public DateTimeOffset ReportTime = DateTimeOffset.Now;
+    public DateTime DateTime = DateTime.Now;
 
     public static bool HasAdscPosition(JsonNode json)
     {
@@ -41,7 +41,7 @@ public class Position
             Lat = basic_report["lat"].GetValue<decimal>(),
             Lon = basic_report["lon"].GetValue<decimal>(),
             Alt = basic_report["alt"].GetValue<int>(),
-            ReportTime = DateTimeOffset.Now
+            DateTime = DateTime.Now
         };
     }
     
@@ -52,9 +52,6 @@ public class Position
         var vdlParams = xid?["vdl_params"]?.AsArray().OfType<JsonObject>()
             .ToDictionary(k => k["name"].GetValue<string>(), v => v["value"]);
         var acLocation = vdlParams["ac_location"].AsObject();
-        var loc = acLocation.ToString();
-
-        Console.WriteLine(loc);
         
         return new Position
         {
@@ -62,7 +59,7 @@ public class Position
             Lat = acLocation["loc"]["lat"].GetValue<decimal>(),
             Lon = acLocation["loc"]["lon"].GetValue<decimal>(),
             Alt = acLocation["alt"].GetValue<int>(),
-            ReportTime = DateTimeOffset.Now
+            DateTime = DateTime.Now
         };
     }
 }

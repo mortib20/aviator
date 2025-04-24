@@ -88,7 +88,7 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
             if (Position.HasAdscPosition(jsonAcars))
             {
                 var position = Position.FromAcarsAdscFrame(jsonAcars);
-                logger.LogInformation("Got a position adsc {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
+                logger.LogInformation("Got a position adsc {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.DateTime);
                 await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -96,12 +96,11 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
         if (FrameTypeFinder.HasXid(jsonAcars))
         {
             airFrame.FrameType = FrameType.Xid;
-            logger.LogInformation("xid");
 
             if (Position.HasXidPosition(jsonAcars))
             {
                 var position = Position.FromXidAcLocationFrame(jsonAcars);
-                logger.LogInformation("Got a position xid {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.ReportTime.Date);
+                logger.LogInformation("Got a position xid {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.DateTime);
                 await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
             }
         }
