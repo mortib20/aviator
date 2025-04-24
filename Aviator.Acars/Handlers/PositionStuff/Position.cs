@@ -28,7 +28,7 @@ public class Position
     {
         var arinc = json["vdl2"]["avlc"]["acars"]["arinc622"];
         var tags = arinc?["adsc"]?["tags"]?.AsArray();
-        var addr = arinc?["air_addr"];
+        var addr = json["vdl2"]?["avlc"]?["src"]?["addr"]?.GetValue<string>();
         var basic_report = tags?.AsArray().OfType<JsonObject>()
             .SelectMany(tag => tag)
             .Where(kvp => kvp.Key == "basic_report")
@@ -37,7 +37,7 @@ public class Position
 
         return new Position
         {
-            Reg = addr.GetValue<string>(),
+            Reg = addr,
             Lat = basic_report["lat"].GetValue<decimal>(),
             Lon = basic_report["lon"].GetValue<decimal>(),
             Alt = basic_report["alt"].GetValue<int>(),
