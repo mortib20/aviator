@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Entities.Converter;
 using Aviator.Acars.Entities.Decoder.Hfdl;
@@ -13,7 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars;
 
-public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager inputManager, IAcarsMetrics metrics, IHubContext<AcarsHub> acarsHub, BasicAcarsHandler basicAcarsHandler, AcarsPositionState acarsPositionState)
+public class AirframeService(ILogger<AirframeService> logger, IAcarsInputManager inputManager, IAcarsMetrics metrics, IHubContext<AirframeHub> acarsHub, BasicAcarsHandler basicAcarsHandler, AcarsPositionState acarsPositionState)
     : AviatorBackgroundService(logger)
 {
 
@@ -51,18 +52,6 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
         if (!AirframeParser.TryParseBytesToJson(bytes, out var jsonAcars))
         {
             logger.LogInformation("Failed to parse bytes to json.");
-            return;
-        }
-        
-        if (!AirframeParser.TryGetSourceType(jsonAcars, out var sourceType))
-        {
-            logger.LogInformation("Failed to get SourceType.");
-            return;
-        }
-
-        if (sourceType is null)
-        {
-            logger.LogInformation("SourceType was null.");
             return;
         }
         
@@ -107,4 +96,6 @@ public class AcarsService(ILogger<AcarsService> logger, IAcarsInputManager input
 
         await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
     }
+    
+    public static bool TryParseBytesToJson(byte[] bytes, out JsonNode acarsFrame)
 }

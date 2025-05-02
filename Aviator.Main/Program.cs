@@ -56,7 +56,7 @@ try
 
     app.UseResponseCompression();
 
-    app.MapHub<AcarsHub>("/Acars");
+    app.MapHub<AirframeHub>("/Acars");
     app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
 
     await app.RunAsync().ConfigureAwait(false);

@@ -36,7 +36,7 @@ public static class AcarsServiceExtension
         // State
         builder.Services.AddSingleton<AcarsPositionState>();
         
-        builder.Services.AddHostedService<AcarsService>(s => SetupAcarsService(s, acarsConfig));
+        builder.Services.AddHostedService<AirframeService>(s => SetupAcarsService(s, acarsConfig));
 
         return builder;
     }
@@ -45,7 +45,7 @@ public static class AcarsServiceExtension
     {
         builder.Services.AddSingleton<IAcarsMetrics>(s =>
         {
-            var logger = s.GetRequiredService<ILogger<AcarsService>>();
+            var logger = s.GetRequiredService<ILogger<AirframeService>>();
             var metrics = new Collection<IAcarsMetrics>();
 
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
@@ -66,7 +66,7 @@ public static class AcarsServiceExtension
     {
         builder.Services.AddSingleton<IAcarsDatabase>(s =>
         {
-            var logger = s.GetRequiredService<ILogger<AcarsService>>();
+            var logger = s.GetRequiredService<ILogger<AirframeService>>();
             var databases = new Collection<IAcarsDatabase>();
 
             if (acarsConfig.MongoDb is not null && acarsConfig.MongoDb!.Enabled)
@@ -82,7 +82,7 @@ public static class AcarsServiceExtension
         });
     }
 
-    private static AcarsService SetupAcarsService(IServiceProvider s, AcarsConfig acarsConfig)
+    private static AirframeService SetupAcarsService(IServiceProvider s, AcarsConfig acarsConfig)
     {
         ArgumentNullException.ThrowIfNull(acarsConfig.Input);
 
@@ -94,7 +94,7 @@ public static class AcarsServiceExtension
 
         var basicAcarsHandler = new BasicAcarsHandler(s.GetRequiredService<ILogger<BasicAcarsHandler>>(), acarsOutputManager, s.GetRequiredService<IAcarsDatabase>());
         
-        return new AcarsService(s.GetRequiredService<ILogger<AcarsService>>(), acarsInputManager, s.GetRequiredService<IAcarsMetrics>(), s.GetRequiredService<IHubContext<AcarsHub>>(), basicAcarsHandler, s.GetRequiredService<AcarsPositionState>());
+        return new AirframeService(s.GetRequiredService<ILogger<AirframeService>>(), acarsInputManager, s.GetRequiredService<IAcarsMetrics>(), s.GetRequiredService<IHubContext<AirframeHub>>(), basicAcarsHandler, s.GetRequiredService<AcarsPositionState>());
     }
 
     private static Dictionary<SourceType, List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)
@@ -108,7 +108,7 @@ public static class AcarsServiceExtension
         var outputDictionary = frameTypes
             .ToDictionary<SourceType, SourceType, List<IOutput>>(frameType => frameType, frameType => outputsTuple.Where(b => b.Types.Contains(frameType)).Select(o => o.Item2).ToList());
 
-        var logger = s.GetRequiredService<ILogger<AcarsService>>();
+        var logger = s.GetRequiredService<ILogger<AirframeService>>();
         logger.LogInformation("{B}", string.Join(Environment.NewLine, frameTypes.Select(t => $"Sending {t} to: {string.Join(", ", outputDictionary[t].Select(f => f.EndPoint).ToList())}")));
 
         return outputDictionary;

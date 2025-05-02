@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Aviator.Acars;
 
-public class AcarsHub(AcarsPositionState acarsPositionState) : Hub
+public class AirframeHub(AcarsPositionState acarsPositionState) : Hub
 {
     public async Task<List<Position>> SubscribeToPositions()
     {

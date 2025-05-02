@@ -12,7 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Aviator.Acars\Aviator.Acars.csproj"/>
+        <ProjectReference Include="..\Aviator.Airframe\Aviator.Airframe.csproj" />
         <ProjectReference Include="..\Aviator.Adsb\Aviator.Adsb.csproj"/>
         <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj"/>
     </ItemGroup>
