@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames;
 
-public class AirframeHandler(ILogger<AirframeHandler> logger, Dictionary<DecoderType, IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager)
+public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager)
 {
     public async Task HandleAirframeAsync(JsonElement airframe, CancellationToken cancellationToken)
     {
@@ -24,6 +24,6 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, Dictionary<Decoder
 
     private IDecoderStrategy? GetAirframeStrategy(JsonElement acarsFrame)
     {
-        return decoderStrategies.FirstOrDefault(strategy => strategy.Value.ThisDecoder(acarsFrame)).Value;
+        return decoderStrategies.FirstOrDefault(strategy => strategy.CanHandleFrame(acarsFrame));
     }
 }

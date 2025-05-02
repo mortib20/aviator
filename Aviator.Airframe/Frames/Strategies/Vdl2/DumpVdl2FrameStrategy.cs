@@ -7,7 +7,7 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger) : IDec
 {
     public FrameType FrameType => FrameType.Vdl2;
 
-    public bool ThisDecoder(JsonElement acarsFrame)
+    public bool CanHandleFrame(JsonElement acarsFrame)
     {
         return
             acarsFrame.TryGetProperty("vdl2", out var vdl2)

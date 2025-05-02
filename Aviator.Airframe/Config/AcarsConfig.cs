@@ -5,7 +5,7 @@ namespace Aviator.Airframe.Config;
 public class AcarsConfig
 {
     public const string Section = "Acars";
-    public EndpointConfig? Input { get; init; }
-    public List<OutputEndpointConfig> Outputs { get; set; } = [];
+    public required EndpointConfig Input { get; init; }
+    public required List<OutputEndpointConfig> Outputs { get; set; } = [];
     public MongoDbConfig? MongoDb { get; init; }
 }
