@@ -1,12 +1,12 @@
-﻿using Aviator.Acars.Frames;
+﻿using Aviator.Airframe.Frames;
 using Aviator.Network.Output;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Acars.Network.Implementation;
+namespace Aviator.Airframe.Network.Implementation;
 
 public class AirframeOutputManager(ILogger<AirframeOutputManager> logger, Dictionary<FrameType, List<IOutput>> outputs) : IAirframeOutputManager
 {
-    public async Task SendToOutputOfTypeAsync(FrameType frameType, byte[] buffer, CancellationToken cancellationToken = default)
+    public async Task SendToOutputsOfFrameTypeAsync(FrameType frameType, byte[] buffer, CancellationToken cancellationToken = default)
     {
         if (!outputs.TryGetValue(frameType, out var outputList))
         {

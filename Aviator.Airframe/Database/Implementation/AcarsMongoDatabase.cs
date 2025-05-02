@@ -1,9 +1,9 @@
 using System.Text;
-using Aviator.Acars.Config;
+using Aviator.Airframe.Config;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace Aviator.Acars.Database.Implementation;
+namespace Aviator.Airframe.Database.Implementation;
 
 public class AcarsMongoDatabase(MongoDbConfig config) : IAcarsDatabase
 {

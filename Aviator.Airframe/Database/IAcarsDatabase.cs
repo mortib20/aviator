@@ -1,4 +1,4 @@
-namespace Aviator.Acars.Database;
+namespace Aviator.Airframe.Database;
 
 public interface IAcarsDatabase
 {

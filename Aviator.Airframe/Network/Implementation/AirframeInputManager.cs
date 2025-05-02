@@ -1,9 +1,8 @@
-using System.Text.Json.Nodes;
 using System.Threading.Channels;
 using Aviator.Network.Input;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Acars.Network.Implementation;
+namespace Aviator.Airframe.Network.Implementation;
 
 public class AirframeInputManager(ILogger<AirframeInputManager> logger, IInput input) : IAirframeInputManager
 {

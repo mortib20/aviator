@@ -1,4 +1,4 @@
-namespace Aviator.Acars.Frames;
+namespace Aviator.Airframe.Frames;
 
 public enum DecoderType
 {

@@ -1,21 +1,12 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using Aviator.Acars.Entities;
-using Aviator.Acars.Entities.Converter;
-using Aviator.Acars.Entities.Decoder.Hfdl;
-using Aviator.Acars.Frames.Strategies;
-using Aviator.Acars.Handlers;
-using Aviator.Acars.Handlers.Parsers;
-using Aviator.Acars.Handlers.PositionStuff;
-using Aviator.Acars.Metrics;
-using Aviator.Acars.Network;
+using Aviator.Airframe.Frames;
+using Aviator.Airframe.Network;
 using Aviator.Global.Service;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
-namespace Aviator.Acars;
+namespace Aviator.Airframe;
 
-public class AirframeService(ILogger<AirframeService> logger, IAirframeInputManager inputManager, IDecoderStrategy decoderStrategy) : AviatorBackgroundService(logger)
+public class AirframeService(ILogger<AirframeService> logger, IAirframeInputManager inputManager, AirframeHandler airframeHandler) : AviatorBackgroundService(logger)
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -46,12 +37,13 @@ public class AirframeService(ILogger<AirframeService> logger, IAirframeInputMana
         }
     }
 
-    private async Task HandleBytes(byte[] bytes, CancellationToken cancellationToken)
+    private Task HandleBytes(byte[] bytes, CancellationToken cancellationToken)
     {
         try
         {
-            using var acarsFrame = JsonDocument.Parse(bytes);
-            
+            using var airframe = JsonDocument.Parse(bytes);
+
+            return airframeHandler.HandleAirframeAsync(airframe.RootElement.Clone(), cancellationToken);
         }
         catch (JsonException jsonException)
         {
@@ -66,6 +58,6 @@ public class AirframeService(ILogger<AirframeService> logger, IAirframeInputMana
             logger.LogWarning(exception, "Failed to handle bytes...");
         }
 
-        // await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
+        return Task.CompletedTask;
     }
 }

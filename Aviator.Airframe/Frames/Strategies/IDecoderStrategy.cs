@@ -1,10 +1,10 @@
-using System.Text.Json.Nodes;
+using System.Text.Json;
 
-namespace Aviator.Acars.Frames.Strategies;
+namespace Aviator.Airframe.Frames.Strategies;
 
 public interface IDecoderStrategy
 {
     public FrameType FrameType { get; }
-    public bool ThisDecoder(JsonNode acarsFrame);
-    public Task HandleAcarsFrame(JsonNode acarsFrame);
+    public bool ThisDecoder(JsonElement acarsFrame);
+    public Task HandleAcarsFrame(JsonElement acarsFrame);
 }

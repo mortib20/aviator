@@ -1,6 +1,6 @@
 using Aviator.Network.Config;
 
-namespace Aviator.Acars.Config;
+namespace Aviator.Airframe.Config;
 
 public class AcarsConfig
 {

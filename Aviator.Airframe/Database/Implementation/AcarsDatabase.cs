@@ -1,4 +1,4 @@
-namespace Aviator.Acars.Database.Implementation;
+namespace Aviator.Airframe.Database.Implementation;
 
 public class AcarsDatabase(ICollection<IAcarsDatabase> acarsDatabases) : IAcarsDatabase
 {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Channels;
 
-namespace Aviator.Acars.Network;
+namespace Aviator.Airframe.Network;
 
 public interface IAirframeInputManager
 {

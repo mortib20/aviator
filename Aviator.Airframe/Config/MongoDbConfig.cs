@@ -1,4 +1,4 @@
-namespace Aviator.Acars.Config;
+namespace Aviator.Airframe.Config;
 
 public class MongoDbConfig
 {

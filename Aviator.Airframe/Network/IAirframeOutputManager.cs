@@ -1,9 +1,8 @@
-﻿using Aviator.Acars.Entities;
-using Aviator.Acars.Frames;
+﻿using Aviator.Airframe.Frames;
 
-namespace Aviator.Acars.Network;
+namespace Aviator.Airframe.Network;
 
 public interface IAirframeOutputManager
 {
-    Task SendToOutputOfTypeAsync(FrameType frameType, byte[] buffer, CancellationToken cancellationToken = default);
+    Task SendToOutputsOfFrameTypeAsync(FrameType frameType, byte[] buffer, CancellationToken cancellationToken = default);
 }

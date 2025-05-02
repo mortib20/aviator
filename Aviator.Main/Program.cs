@@ -1,7 +1,6 @@
 using System.Text.Json;
-using Aviator.Acars;
-using Aviator.Acars.DependencyInjection;
 using Aviator.Adsb.DependencyInjection;
+using Aviator.Airframe.DependencyInjection;
 using Aviator.Global.DependencyInjection;
 using Aviator.Network.DependencyInjection;
 using Serilog;
@@ -41,7 +40,8 @@ try
 
     builder.AddAviatorInfluxDb();
     builder.AddNetworkUtilities();
-    builder.AddAcarsService();
+    
+    builder.AddAirframeExtension();
     builder.AddAdsbService();
 
     var app = builder.Build();
@@ -56,7 +56,7 @@ try
 
     app.UseResponseCompression();
 
-    app.MapHub<AirframeHub>("/Acars");
+    //app.MapHub<AirframeHub>("/Acars");
     app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
 
     await app.RunAsync().ConfigureAwait(false);

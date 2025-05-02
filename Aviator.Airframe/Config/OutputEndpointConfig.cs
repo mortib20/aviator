@@ -1,9 +1,9 @@
-using Aviator.Acars.Entities;
+using Aviator.Airframe.Frames;
 using Aviator.Network.Config;
 
-namespace Aviator.Acars.Config;
+namespace Aviator.Airframe.Config;
 
-public class OutputEndpointConfig : EndpointConfig
+public abstract class OutputEndpointConfig : EndpointConfig
 {
-    public List<SourceType> Types { get; set; } = [];
+    public List<FrameType> Types { get; set; } = [];
 }
