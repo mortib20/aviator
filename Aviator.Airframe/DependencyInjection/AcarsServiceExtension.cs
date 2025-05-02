@@ -43,22 +43,22 @@ public static class AcarsServiceExtension
 
     private static void SetupMetrics(WebApplicationBuilder builder, MetricsConfig metricsConfig)
     {
-        builder.Services.AddSingleton<IAcarsMetrics>(s =>
+        builder.Services.AddSingleton<IAirframeMetrics>(s =>
         {
             var logger = s.GetRequiredService<ILogger<AirframeService>>();
-            var metrics = new Collection<IAcarsMetrics>();
+            var metrics = new Collection<IAirframeMetrics>();
 
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
-                var metricLogger = s.GetRequiredService<ILogger<InfluxDbAcarsMetrics>>();
-                var metric = new InfluxDbAcarsMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
+                var metricLogger = s.GetRequiredService<ILogger<InfluxDbAirframeMetrics>>();
+                var metric = new InfluxDbAirframeMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
                 metrics.Add(metric);
             }
 
             var enabledMetrics = metrics.Select(acarsMetrics => acarsMetrics.GetType()).ToList();
             logger.LogInformation("Enabled Metric: {Types}", string.Join(", ", enabledMetrics));
 
-            return new AcarsMetrics(metrics);
+            return new AirframeMetrics(metrics);
         });
     }
 
@@ -89,12 +89,12 @@ public static class AcarsServiceExtension
         var outputDictionary = CreateOutputDictionary(s, acarsConfig.Outputs);
 
         var input = s.GetRequiredService<InputBuilder>().Create(acarsConfig.Input.Protocol, acarsConfig.Input.Host, acarsConfig.Input.Port);
-        var acarsInputManager = new AcarsInputManager(s.GetRequiredService<ILogger<AcarsInputManager>>(), input);
-        var acarsOutputManager = new AcarsOutputManager(s.GetRequiredService<ILogger<AcarsOutputManager>>(), outputDictionary);
+        var acarsInputManager = new AirframeInputManager(s.GetRequiredService<ILogger<AirframeInputManager>>(), input);
+        var acarsOutputManager = new AirframeOutputManager(s.GetRequiredService<ILogger<AirframeOutputManager>>(), outputDictionary);
 
         var basicAcarsHandler = new BasicAcarsHandler(s.GetRequiredService<ILogger<BasicAcarsHandler>>(), acarsOutputManager, s.GetRequiredService<IAcarsDatabase>());
         
-        return new AirframeService(s.GetRequiredService<ILogger<AirframeService>>(), acarsInputManager, s.GetRequiredService<IAcarsMetrics>(), s.GetRequiredService<IHubContext<AirframeHub>>(), basicAcarsHandler, s.GetRequiredService<AcarsPositionState>());
+        return new AirframeService(s.GetRequiredService<ILogger<AirframeService>>(), acarsInputManager, s.GetRequiredService<IAirframeMetrics>(), s.GetRequiredService<IHubContext<AirframeHub>>(), basicAcarsHandler, s.GetRequiredService<AcarsPositionState>());
     }
 
     private static Dictionary<SourceType, List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)

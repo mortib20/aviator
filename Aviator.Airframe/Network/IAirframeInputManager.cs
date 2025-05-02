@@ -2,7 +2,7 @@
 
 namespace Aviator.Acars.Network;
 
-public interface IAcarsInputManager
+public interface IAirframeInputManager
 {
     ChannelReader<byte[]> ChannelReader { get; }
     

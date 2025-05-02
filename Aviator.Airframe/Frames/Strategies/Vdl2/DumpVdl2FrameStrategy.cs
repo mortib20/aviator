@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace Aviator.Acars.Frames.Strategies.Vdl2;
 
-public class DumpVdl2FrameStrategy() : IAcarsFrameStrategy
+public class DumpVdl2FrameStrategy() : IDecoderStrategy
 {
     public FrameType FrameType => FrameType.Vdl2;
 

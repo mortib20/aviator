@@ -2,7 +2,7 @@ using Aviator.Acars.Entities;
 
 namespace Aviator.Acars.Metrics;
 
-public interface IAcarsMetrics
+public interface IAirframeMetrics
 {
     Task IncreaseAsync(AirFrame frame, CancellationToken cancellationToken = default);
 }

@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Aviator.Acars.Entities;
 using Aviator.Acars.Entities.Converter;
 using Aviator.Acars.Entities.Decoder.Hfdl;
+using Aviator.Acars.Frames.Strategies;
 using Aviator.Acars.Handlers;
 using Aviator.Acars.Handlers.Parsers;
 using Aviator.Acars.Handlers.PositionStuff;
@@ -14,10 +15,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars;
 
-public class AirframeService(ILogger<AirframeService> logger, IAcarsInputManager inputManager, IAcarsMetrics metrics, IHubContext<AirframeHub> acarsHub, BasicAcarsHandler basicAcarsHandler, AcarsPositionState acarsPositionState)
-    : AviatorBackgroundService(logger)
+public class AirframeService(ILogger<AirframeService> logger, IAirframeInputManager inputManager, IDecoderStrategy decoderStrategy) : AviatorBackgroundService(logger)
 {
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
@@ -49,53 +48,24 @@ public class AirframeService(ILogger<AirframeService> logger, IAcarsInputManager
 
     private async Task HandleBytes(byte[] bytes, CancellationToken cancellationToken)
     {
-        if (!AirframeParser.TryParseBytesToJson(bytes, out var jsonAcars))
+        try
         {
-            logger.LogInformation("Failed to parse bytes to json.");
-            return;
-        }
-        
-        await basicAcarsHandler.HandleAsync(bytes, (SourceType)sourceType, cancellationToken).ConfigureAwait(false);
-        
-        // Advanced handling below...
-
-        
-        var airFrame = AirFrameConverter.FromType(bytes, (SourceType)sourceType!);
-
-        if (airFrame is null)
-        {
-            return;
-        }
-        
-        if (FrameTypeFinder.HasAcars(jsonAcars))
-        {
-            airFrame.FrameType = FrameType.Acars;
+            using var acarsFrame = JsonDocument.Parse(bytes);
             
-            var basicAcars = AcarsConverter.BasicAcarsFromType(bytes, airFrame.SourceType);
-            await acarsHub.Clients.All.SendAsync("receiveAcarsFrame", JsonSerializer.Serialize(basicAcars), cancellationToken).ConfigureAwait(false);
-
-            if (Position.HasAdscPosition(jsonAcars))
-            {
-                var position = Position.FromAcarsAdscFrame(jsonAcars);
-                logger.LogInformation("Got a position adsc {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.DateTime);
-                await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
-            }
         }
-
-        if (FrameTypeFinder.HasXid(jsonAcars))
+        catch (JsonException jsonException)
         {
-            airFrame.FrameType = FrameType.Xid;
-
-            if (Position.HasXidPosition(jsonAcars))
-            {
-                var position = Position.FromXidAcLocationFrame(jsonAcars);
-                logger.LogInformation("Got a position xid {Lat} {Lon} {Reg} {Date}", position.Lat, position.Lon, position.Reg, position.DateTime);
-                await acarsPositionState.AddPositionAsync(position, cancellationToken).ConfigureAwait(false);
-            }
+            logger.LogWarning(jsonException, "Failed to parse bytes...");
+        }
+        catch (ArgumentException argumentException)
+        {
+            logger.LogWarning(argumentException, "JsonDocument.Parse() options contain unsupported options...");
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to handle bytes...");
         }
 
-        await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
+        // await metrics.IncreaseAsync(airFrame, cancellationToken).ConfigureAwait(false);
     }
-    
-    public static bool TryParseBytesToJson(byte[] bytes, out JsonNode acarsFrame)
 }

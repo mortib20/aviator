@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars.Network.Implementation;
 
-public class AcarsOutputManager(ILogger<AcarsOutputManager> logger, Dictionary<FrameType, List<IOutput>> outputs) : IAcarsOutputManager
+public class AirframeOutputManager(ILogger<AirframeOutputManager> logger, Dictionary<FrameType, List<IOutput>> outputs) : IAirframeOutputManager
 {
     public async Task SendToOutputOfTypeAsync(FrameType frameType, byte[] buffer, CancellationToken cancellationToken = default)
     {

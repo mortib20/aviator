@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Acars.Network.Implementation;
 
-public class AcarsInputManager(ILogger<AcarsInputManager> logger, IInput input) : IAcarsInputManager
+public class AirframeInputManager(ILogger<AirframeInputManager> logger, IInput input) : IAirframeInputManager
 {
     private const int MinBytes = 128;
 
