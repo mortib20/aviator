@@ -5,6 +5,6 @@ namespace Aviator.Airframe.Frames.Strategies;
 public interface IDecoderStrategy
 {
     public FrameType FrameType { get; }
-    public bool CanHandleFrame(JsonElement acarsFrame);
-    public Task HandleAcarsFrame(JsonElement acarsFrame);
+    public bool CanHandleAirframe(JsonElement rawAirframe);
+    public Task<Entities.Airframe?> HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken);
 }

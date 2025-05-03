@@ -1,6 +1,7 @@
 using Aviator.Airframe.Config;
 using Aviator.Airframe.Frames;
 using Aviator.Airframe.Frames.Strategies;
+using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2.Protocol;
 using Aviator.Airframe.Network;
 using Aviator.Airframe.Network.Implementation;
 using Aviator.Global.DependencyInjection;
@@ -17,7 +18,7 @@ public static class AirframeExtension
 {
     public static WebApplicationBuilder AddAirframeExtension(this WebApplicationBuilder builder)
     {
-        var acarsConfig = builder.Configuration.GetSection(AcarsConfig.Section).Get<AcarsConfig>();
+        var acarsConfig = builder.Configuration.GetSection(AirframeConfig.Section).Get<AirframeConfig>();
         ArgumentNullException.ThrowIfNull(acarsConfig);
         
         // Inject input manager
@@ -37,14 +38,16 @@ public static class AirframeExtension
             return new AirframeOutputManager(sp.GetRequiredService<ILogger<AirframeOutputManager>>(), outputsDictionary);
         });
         
+        // Inject all decoder specific protocol strategies
+        builder.Services.AddAllImplementations<IDumpVdl2ProtocolStrategy>();
+        
         // Inject all decoder strategies
         builder.Services.AddAllImplementations<IDecoderStrategy>();
         
         builder.Services.AddSingleton<AirframeHandler>(sp =>
         {
-
             var logger = sp.GetRequiredService<ILogger<AirframeHandler>>();
-            var decoderStrategies = sp.GetServices<IDecoderStrategy>().ToList();
+            var decoderStrategies = sp.GetRequiredService<List<IDecoderStrategy>>();
             var outputManager = sp.GetRequiredService<IAirframeOutputManager>();
             return new AirframeHandler(logger, decoderStrategies, outputManager);
         });
@@ -63,7 +66,10 @@ public static class AirframeExtension
         var frameTypes = Enum.GetValues<FrameType>().ToList();
 
         var outputDictionary = frameTypes
-            .ToDictionary<FrameType, FrameType, List<IOutput>>(frameType => frameType, frameType => outputsTuple.Where(b => b.Types.Contains(frameType)).Select(o => o.Item2).ToList());
+            .ToDictionary<FrameType, FrameType, List<IOutput>>(
+                frameType => frameType,
+                frameType => outputsTuple.Where(b => b.Types.Contains(frameType)).Select(o => o.Item2).ToList()
+                );
 
         var logger = s.GetRequiredService<ILogger<FrameType>>();
         
@@ -71,6 +77,7 @@ public static class AirframeExtension
         {
             logger.LogInformation("Sending {Type} to {Outputs}", key, string.Join(", ", value.Select(output => output.EndPoint)));
         }
+        
         return outputDictionary;
     }
 }

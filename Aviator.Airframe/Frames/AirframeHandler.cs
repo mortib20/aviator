@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Aviator.Airframe.Frames.Strategies;
 using Aviator.Airframe.Network;
@@ -7,23 +8,32 @@ namespace Aviator.Airframe.Frames;
 
 public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager)
 {
-    public async Task HandleAirframeAsync(JsonElement airframe, CancellationToken cancellationToken)
+    public async Task HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken)
     {
-        var airframeStrategy = GetAirframeStrategy(airframe);
+        var airframeStrategy = GetAirframeStrategy(rawAirframe);
 
         if (airframeStrategy is null)
         {
-            logger.LogWarning("Strategy for this frame not implemented...");
+            logger.LogWarning("Strategy for this decoder not implemented...");
             return;
         }
         
-        await airframeOutputManager.SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, JsonSerializer.SerializeToUtf8Bytes(airframe),cancellationToken).ConfigureAwait(false);
+        await airframeOutputManager.SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, JsonSerializer.SerializeToUtf8Bytes(rawAirframe), cancellationToken).ConfigureAwait(false);
         
-        await airframeStrategy.HandleAcarsFrame(airframe).ConfigureAwait(false);
+        var airframe = await airframeStrategy.HandleAirframeAsync(rawAirframe, cancellationToken).ConfigureAwait(false);
+
+        if (airframe is null)
+        {
+            logger.LogDebug("Aiframe was null");
+            return;
+        }
+        
+        // Metrics
+        logger.LogDebug("{Airframe}", airframe);
     }
 
     private IDecoderStrategy? GetAirframeStrategy(JsonElement acarsFrame)
     {
-        return decoderStrategies.FirstOrDefault(strategy => strategy.CanHandleFrame(acarsFrame));
+        return decoderStrategies.FirstOrDefault(strategy => strategy.CanHandleAirframe(acarsFrame));
     }
 }

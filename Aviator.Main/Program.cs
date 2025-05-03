@@ -16,10 +16,8 @@ if (!Directory.Exists(logPath))
 // TODO put logger in config not hardcoded here
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: logFormat)
-    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
-    .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
-    .MinimumLevel.Override("Microsoft.AspNetCore.Mvc", LogEventLevel.Warning)
-    .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
+    // .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
+    .MinimumLevel.Debug()
     .CreateLogger();
 
 try

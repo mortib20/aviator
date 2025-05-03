@@ -3,7 +3,7 @@ using Aviator.Network.Config;
 
 namespace Aviator.Airframe.Config;
 
-public abstract class OutputEndpointConfig : EndpointConfig
+public class OutputEndpointConfig : EndpointConfig
 {
     public List<FrameType> Types { get; set; } = [];
 }
