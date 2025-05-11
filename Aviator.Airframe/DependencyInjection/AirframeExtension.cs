@@ -75,7 +75,12 @@ public static class AirframeExtension
         
         foreach (var (key, value) in outputDictionary)
         {
-            logger.LogInformation("Sending {Type} to {Outputs}", key, string.Join(", ", value.Select(output => output.EndPoint)));
+            if (value.Count == 0)
+            {
+                logger.LogInformation("{Type} disabled, no output set.", key);
+                continue;
+            }
+            logger.LogInformation("Sending {Type} to {Outputs}.", key, string.Join(", ", value.Select(output => output.EndPoint)));
         }
         
         return outputDictionary;
