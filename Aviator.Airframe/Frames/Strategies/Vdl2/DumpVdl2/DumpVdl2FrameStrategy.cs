@@ -32,13 +32,13 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             logger.LogWarning("Frame did not contain Vdl2...");
             return null;
         }
-        
+
         var hasFreq = vdl2.GetProperty("freq").TryGetDouble(out var freq);
         var hasAvlc = vdl2.TryGetProperty("avlc", out var avlc);
 
         if (!hasFreq || !hasAvlc)
         {
-            logger.LogWarning("Frame did not contain Frequency or Avlc...");
+            logger.LogWarning("Frame did not contain frequency or Avlc...");
             return null;
         }
 
@@ -51,12 +51,12 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             Address = rawSource.GetProperty("addr").GetString() ?? "000000",
             SourceType = rawSource.GetProperty("type").GetString() == "Aircraft" ? SourceType.Aircraft : SourceType.Ground,
         };
-        
+
         var rawDestination = avlc.GetProperty("dst");
         var destination = new Destination
         {
             Address = rawDestination.GetProperty("addr").GetString() ?? "000000",
-            DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground, 
+            DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground,
         };
 
         var protocolStrategy = GetProtocolStrategy(avlc.Clone());
@@ -68,7 +68,7 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
         }
 
         await protocolStrategy.HandleProtocolAsync(avlc, cancellationToken).ConfigureAwait(false);
-        
+
         return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);
     }
 

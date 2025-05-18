@@ -19,6 +19,8 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
         using var scope = logger.BeginScope(nameof(AcarsdecFrameStrategy));
         logger.LogDebug("Handling Acarsdec Frame");
 
+        // TODO add more
+        
         return Task.FromResult<Entities.Airframe?>(null);
     }
 }

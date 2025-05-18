@@ -14,7 +14,7 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
 
         if (airframeStrategy is null)
         {
-            logger.LogWarning("Strategy for this decoder not implemented...");
+            logger.LogWarning("Strategy for this airframe not implemented...");
             return;
         }
         

@@ -1,6 +1,7 @@
 using Aviator.Airframe.Config;
 using Aviator.Airframe.Frames;
 using Aviator.Airframe.Frames.Strategies;
+using Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl.Protocol;
 using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2.Protocol;
 using Aviator.Airframe.Network;
 using Aviator.Airframe.Network.Implementation;
@@ -40,6 +41,7 @@ public static class AirframeExtension
         
         // Inject all decoder specific protocol strategies
         builder.Services.AddAllImplementations<IDumpVdl2ProtocolStrategy>();
+        builder.Services.AddAllImplementations<IDumpHfdlFrameStrategy>();
         
         // Inject all decoder strategies
         builder.Services.AddAllImplementations<IDecoderStrategy>();
