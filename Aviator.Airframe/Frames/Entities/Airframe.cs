@@ -12,19 +12,7 @@ public class Airframe
     
     
 
-    public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination)
-    {
-        return new Airframe
-        {
-            FrameType = frameType,
-            ProtocolType = protocolType,
-            Channel = channel,
-            Source = source,
-            Destination = destination,
-        };
-    }
-
-    public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination, double signalLevel, double noiseLevel)
+    public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination, double? signalLevel = null, double? noiseLevel = null)
     {
         return new Airframe
         {
@@ -37,6 +25,20 @@ public class Airframe
             NoiseLevel = noiseLevel,
         };
     }
+
+    // public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination, double signalLevel, double noiseLevel)
+    // {
+    //     return new Airframe
+    //     {
+    //         FrameType = frameType,
+    //         ProtocolType = protocolType,
+    //         Channel = channel,
+    //         Source = source,
+    //         Destination = destination,
+    //         SignalLevel = signalLevel,
+    //         NoiseLevel = noiseLevel,
+    //     };
+    // }
 
     public override string ToString()
     {

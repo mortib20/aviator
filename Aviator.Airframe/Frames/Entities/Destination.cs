@@ -2,6 +2,7 @@ namespace Aviator.Airframe.Frames.Entities;
 
 public enum DestinationType
 {
+    Unknown,
     Ground,
     Aircraft
 }

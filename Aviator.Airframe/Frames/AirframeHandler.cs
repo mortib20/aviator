@@ -1,12 +1,13 @@
 using System.Text;
 using System.Text.Json;
 using Aviator.Airframe.Frames.Strategies;
+using Aviator.Airframe.Metrics;
 using Aviator.Airframe.Network;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames;
 
-public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager)
+public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager, AirframeMetrics airframeMetrics)
 {
     public async Task HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken)
     {
@@ -22,11 +23,15 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
         
         var airframe = await airframeStrategy.HandleAirframeAsync(rawAirframe, cancellationToken).ConfigureAwait(false);
 
+        
+        
         if (airframe is null)
         {
             logger.LogDebug("Aiframe was null");
             return;
         }
+
+        await airframeMetrics.HandleAirframe(airframe).ConfigureAwait(false);
         
         // Metrics
         logger.LogDebug("{Airframe}", airframe);

@@ -3,6 +3,7 @@ using Aviator.Airframe.Frames;
 using Aviator.Airframe.Frames.Strategies;
 using Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl.Protocol;
 using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2.Protocol;
+using Aviator.Airframe.Metrics;
 using Aviator.Airframe.Network;
 using Aviator.Airframe.Network.Implementation;
 using Aviator.Global.DependencyInjection;
@@ -45,13 +46,16 @@ public static class AirframeExtension
         
         // Inject all decoder strategies
         builder.Services.AddAllImplementations<IDecoderStrategy>();
+
+        builder.Services.AddSingleton<AirframeMetrics>();
         
         builder.Services.AddSingleton<AirframeHandler>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<AirframeHandler>>();
             var decoderStrategies = sp.GetRequiredService<List<IDecoderStrategy>>();
             var outputManager = sp.GetRequiredService<IAirframeOutputManager>();
-            return new AirframeHandler(logger, decoderStrategies, outputManager);
+            var airframeMetrics = sp.GetRequiredService<AirframeMetrics>();
+            return new AirframeHandler(logger, decoderStrategies, outputManager, airframeMetrics);
         });
         
         builder.Services.AddHostedService<AirframeService>();

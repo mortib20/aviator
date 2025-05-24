@@ -20,8 +20,4 @@
         <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj"/>
         <ProjectReference Include="..\Aviator.Network\Aviator.Network.csproj"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Metrics\" />
-    </ItemGroup>
 </Project>

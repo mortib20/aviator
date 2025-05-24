@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aviator.Airframe.Frames.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames.Strategies.Acars.Acarsdec;
@@ -14,13 +15,33 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
            && name.GetString() is "acarsdec";
     }
 
-    public Task<Entities.Airframe?> HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken)
+    public async Task<Entities.Airframe?> HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken)
     {
         using var scope = logger.BeginScope(nameof(AcarsdecFrameStrategy));
         logger.LogDebug("Handling Acarsdec Frame");
 
-        // TODO add more
-        
-        return Task.FromResult<Entities.Airframe?>(null);
+        var hasFreq = rawAirframe.TryGetProperty("freq", out var freq);
+
+        if (!hasFreq)
+        {
+            logger.LogWarning("Frame does not contain frequency...");
+            return null;
+        }
+
+        var signalLevel = rawAirframe.GetProperty("level").GetDouble();
+
+        var source = new Source
+        {
+            Address = rawAirframe.GetProperty("tail").ToString(),
+            SourceType = SourceType.Aircraft
+        };
+
+        var destination = new Destination
+        {
+            Address = "000000",
+            DestinationType = DestinationType.Unknown
+        };
+
+        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel);
     }
 }

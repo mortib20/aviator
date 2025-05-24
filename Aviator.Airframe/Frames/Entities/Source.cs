@@ -2,6 +2,7 @@ namespace Aviator.Airframe.Frames.Entities;
 
 public enum SourceType
 {
+    Unknown,
     Ground,
     Aircraft
 }
