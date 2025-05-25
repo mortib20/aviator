@@ -45,7 +45,7 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
         if (hasSpdu)
         {
             // TODO implement something
-            logger.LogInformation("Frame contained spdu, currently not implemented...");
+            logger.LogDebug("Frame contained spdu, currently not implemented...");
             return null;
         }
 

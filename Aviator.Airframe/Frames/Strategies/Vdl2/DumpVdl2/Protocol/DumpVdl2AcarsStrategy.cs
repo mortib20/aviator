@@ -16,7 +16,7 @@ public class DumpVdl2AcarsStrategy(ILogger<DumpVdl2AcarsStrategy> logger) : IDum
     public Task HandleProtocolAsync(JsonElement avlc, CancellationToken cancellationToken)
     {
         using var scope = logger.BeginScope(nameof(DumpVdl2AcarsStrategy));
-        logger.LogInformation("Handling ACARS like a pro");
+        logger.LogDebug("Handling ACARS like a pro");
 
         return Task.CompletedTask;
     }

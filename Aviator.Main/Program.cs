@@ -16,8 +16,7 @@ if (!Directory.Exists(logPath))
 // TODO put logger in config not hardcoded here
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(outputTemplate: logFormat)
-    // .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
-    .MinimumLevel.Debug()
+    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
     .CreateLogger();
 
 try

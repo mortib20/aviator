@@ -63,7 +63,7 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
 
         if (protocolStrategy is null)
         {
-            logger.LogWarning("Strategy for this protocol not implemented... {Frame}", Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(rawAirframe)));
+            logger.LogDebug("Strategy for this protocol not implemented... {Frame}", Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(rawAirframe)));
             return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);
         }
 
