@@ -4,7 +4,6 @@ using Aviator.Airframe.DependencyInjection;
 using Aviator.Global.DependencyInjection;
 using Aviator.Network.DependencyInjection;
 using Serilog;
-using Serilog.Events;
 
 const string logFormat = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}{Scope}] {Message:lj}{NewLine}{Exception}";
 var logPath = Path.Combine(Environment.CurrentDirectory, "logs");
@@ -13,10 +12,13 @@ if (!Directory.Exists(logPath))
     Directory.CreateDirectory(logPath);
 }
 
-// TODO put logger in config not hardcoded here
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(outputTemplate: logFormat)
-    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
+    .ReadFrom.Configuration(configuration)
     .CreateLogger();
 
 try
