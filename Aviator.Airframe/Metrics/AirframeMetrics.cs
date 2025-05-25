@@ -12,9 +12,27 @@ public class AirframeMetrics(InfluxDbMetrics influxDbMetrics)
             .SetTag("frameType", airframe.FrameType.ToString())
             .SetTag("protocolType", airframe.ProtocolType.ToString())
             .SetField("value", 1);
-        
-        // TODO noise and signal level
 
         await influxDbMetrics.WritePointAsync(point).ConfigureAwait(false);
+        
+        if (airframe.SignalLevel is not null)
+        {
+            var signalLevel = PointData.Measurement("signalLevel")
+                .SetTag("channel", airframe.Channel)
+                .SetTag("frameType", airframe.FrameType.ToString())
+                .SetField("value", airframe.SignalLevel);
+            
+            await influxDbMetrics.WritePointAsync(signalLevel).ConfigureAwait(false);
+        }
+
+        if (airframe.NoiseLevel is not null)
+        {
+            var signalNoise = PointData.Measurement("noiseLevel")
+                .SetTag("channel", airframe.Channel)
+                .SetTag("frameType", airframe.FrameType.ToString())
+                .SetField("value", airframe.NoiseLevel);
+            
+            await influxDbMetrics.WritePointAsync(signalNoise).ConfigureAwait(false);
+        }
     }
 }
