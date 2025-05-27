@@ -13,7 +13,7 @@ if (!Directory.Exists(logPath))
 }
 
 var configuration = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
+    .SetBasePath(Environment.CurrentDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .Build();
 
