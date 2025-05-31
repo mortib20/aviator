@@ -22,7 +22,14 @@ public class AirframeService(ILogger<AirframeService> logger, IAirframeInputMana
                     continue;
                 }
 
-                await HandleBytes(bytes, stoppingToken).ConfigureAwait(false);
+                try
+                {
+                    await HandleBytes(bytes, stoppingToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "Failed to handle bytes...");
+                }
             }
 
             await inputTask;
