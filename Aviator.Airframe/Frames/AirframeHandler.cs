@@ -33,7 +33,7 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
 
         if (airframe.ProtocolType == ProtocolType.Acars)
         {
-            var hasVdl2 = rawAirframe.Clone().TryGetProperty("vdl2", out var vdl2);
+            var hasVdl2 = rawAirframe.TryGetProperty("vdl2", out var vdl2);
             var hasAvlc = vdl2.TryGetProperty("avlc", out var avlc);
             var hasAcars = avlc.TryGetProperty("acars", out var acars);
 
