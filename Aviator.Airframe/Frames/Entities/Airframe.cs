@@ -10,6 +10,8 @@ public class Airframe
     public double? SignalLevel { get; set; }
     public double? NoiseLevel { get; set; }
     
+    public object? Protocol { get; set; }
+    
     
 
     public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination, double? signalLevel = null, double? noiseLevel = null)

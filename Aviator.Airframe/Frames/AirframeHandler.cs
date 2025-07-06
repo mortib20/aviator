@@ -1,5 +1,5 @@
-using System.Text;
 using System.Text.Json;
+using Aviator.Airframe.Frames.Entities;
 using Aviator.Airframe.Frames.Strategies;
 using Aviator.Airframe.Metrics;
 using Aviator.Airframe.Network;
@@ -33,7 +33,21 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
 
         if (airframe.ProtocolType == ProtocolType.Acars)
         {
-            await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
+            var hasVdl2 = rawAirframe.TryGetProperty("vdl2", out var vdl2);
+            var hasAvlc = vdl2.TryGetProperty("avlc", out var avlc);
+            var hasAcars = avlc.TryGetProperty("acars", out var acars);
+
+            if (hasVdl2 && hasAvlc && !hasAcars)
+            {
+                airframe.Protocol = new Acars
+                {
+                    Label = acars.GetProperty("label").GetString() ?? string.Empty,
+                    Registration = acars.GetProperty("reg").GetString() ?? string.Empty,
+                    Text = acars.GetProperty("msg_text").GetString() ?? string.Empty
+                };
+            
+                await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);   
+            }
         }
         
         await airframeMetrics.HandleAirframe(airframe).ConfigureAwait(false);
