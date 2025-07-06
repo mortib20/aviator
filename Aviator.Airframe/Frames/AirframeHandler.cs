@@ -31,7 +31,10 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             return;
         }
 
-        await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
+        if (airframe.ProtocolType == ProtocolType.Acars)
+        {
+            await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
+        }
         
         await airframeMetrics.HandleAirframe(airframe).ConfigureAwait(false);
         
