@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aviator.Adsb.DependencyInjection;
 using Aviator.Airframe.DependencyInjection;
+using Aviator.Airframe.SignalR;
 using Aviator.Global.DependencyInjection;
 using Aviator.Network.DependencyInjection;
 using Serilog;
@@ -55,7 +56,7 @@ try
 
     app.UseResponseCompression();
 
-    //app.MapHub<AirframeHub>("/Acars");
+    app.MapHub<AirframeHub>("/Acars");
     app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
 
     await app.RunAsync().ConfigureAwait(false);

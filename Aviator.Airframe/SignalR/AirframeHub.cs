@@ -11,3 +11,13 @@
 //         return acarsPositionState.Positions;
 //     }
 // }
+
+
+using Microsoft.AspNetCore.SignalR;
+
+namespace Aviator.Airframe.SignalR;
+
+public class AirframeHub : Hub
+{
+    //
+}

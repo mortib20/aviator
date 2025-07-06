@@ -3,11 +3,13 @@ using System.Text.Json;
 using Aviator.Airframe.Frames.Strategies;
 using Aviator.Airframe.Metrics;
 using Aviator.Airframe.Network;
+using Aviator.Airframe.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames;
 
-public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager, AirframeMetrics airframeMetrics)
+public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager, AirframeMetrics airframeMetrics, AirframeHub airframeHub)
 {
     public async Task HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken)
     {
@@ -22,15 +24,15 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
         await airframeOutputManager.SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, JsonSerializer.SerializeToUtf8Bytes(rawAirframe), cancellationToken).ConfigureAwait(false);
         
         var airframe = await airframeStrategy.HandleAirframeAsync(rawAirframe, cancellationToken).ConfigureAwait(false);
-
-        
         
         if (airframe is null)
         {
-            logger.LogDebug("Aiframe was null");
+            logger.LogDebug("Airframe was null");
             return;
         }
 
+        await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
+        
         await airframeMetrics.HandleAirframe(airframe).ConfigureAwait(false);
         
         // Metrics
