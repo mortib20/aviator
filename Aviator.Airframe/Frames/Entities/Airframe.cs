@@ -1,9 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace Aviator.Airframe.Frames.Entities;
 
 public class Airframe
 {
     public DateTimeOffset Timestamp { get; } = DateTimeOffset.UtcNow;
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public required FrameType FrameType { get; set; }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public required ProtocolType ProtocolType { get; set; }
     public required string Channel { get; set; }
     public required Source Source { get; set; }
