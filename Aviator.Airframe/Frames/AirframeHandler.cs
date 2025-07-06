@@ -37,7 +37,7 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             var hasAvlc = vdl2.TryGetProperty("avlc", out var avlc);
             var hasAcars = avlc.TryGetProperty("acars", out var acars);
 
-            if (hasVdl2 && hasAvlc && !hasAcars)
+            if (hasVdl2 && hasAvlc && hasAcars)
             {
                 airframe.Protocol = new Acars
                 {
