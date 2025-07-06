@@ -2,6 +2,7 @@ namespace Aviator.Airframe.Frames.Entities;
 
 public class Airframe
 {
+    public DateTimeOffset Timestamp { get; } = DateTimeOffset.UtcNow;
     public required FrameType FrameType { get; set; }
     public required ProtocolType ProtocolType { get; set; }
     public required string Channel { get; set; }
