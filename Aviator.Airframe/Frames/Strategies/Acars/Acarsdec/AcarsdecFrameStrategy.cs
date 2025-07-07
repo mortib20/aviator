@@ -49,6 +49,6 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
             Text = rawAirframe.GetProperty("text").GetString() ?? ""
         };
 
-        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel);
+        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel, protocol: acars);
     }
 }
