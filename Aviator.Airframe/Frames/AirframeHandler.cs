@@ -33,7 +33,7 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             return;
         }
 
-        if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL, ProtocolType: ProtocolType.Acars, Protocol: not null })
+        if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL or FrameType.Acars, ProtocolType: ProtocolType.Acars, Protocol: not null })
         {
             await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
         }

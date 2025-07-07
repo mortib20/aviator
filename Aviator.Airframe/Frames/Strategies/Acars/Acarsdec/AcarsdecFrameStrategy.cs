@@ -42,6 +42,13 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
             DestinationType = DestinationType.Unknown
         };
 
+        var acars = new Entities.Acars
+        {
+            Label = rawAirframe.GetProperty("label").GetString() ?? "",
+            Registration = rawAirframe.GetProperty("tail").GetString() ?? "",
+            Text = rawAirframe.GetProperty("text").GetString() ?? ""
+        };
+
         return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel);
     }
 }
