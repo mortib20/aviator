@@ -67,9 +67,9 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);
         }
 
-        await protocolStrategy.HandleProtocolAsync(avlc, cancellationToken).ConfigureAwait(false);
+        var protocol = await protocolStrategy.HandleProtocolAsync(avlc, cancellationToken).ConfigureAwait(false);
 
-        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);
+        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, protocol);
     }
 
     private IDumpVdl2ProtocolStrategy? GetProtocolStrategy(JsonElement avlc)

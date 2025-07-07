@@ -5,6 +5,6 @@ namespace Aviator.Airframe.Frames.Strategies;
 public interface IProtocolStrategy
 {
     ProtocolType ProtocolType { get; }
-    bool CanHandleProtocol(JsonElement avlc);
-    Task HandleProtocolAsync(JsonElement avlc, CancellationToken cancellationToken);
+    bool CanHandleProtocol(JsonElement protocol);
+    Task<object> HandleProtocolAsync(JsonElement protocol, CancellationToken cancellationToken);
 }

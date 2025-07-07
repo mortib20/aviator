@@ -1,10 +1,12 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using Aviator.Airframe.Frames.Entities;
+using Aviator.Airframe.Frames.Strategies.AeroL.Jaero.Protocol;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames.Strategies.AeroL.Jaero;
 
-public class JaeroFrameStrategy(ILogger<JaeroFrameStrategy> logger) : IDecoderStrategy
+public class JaeroFrameStrategy(ILogger<JaeroFrameStrategy> logger, List<IJaeroProtocolStrategy> protocolStrategies) : IDecoderStrategy
 {
     public FrameType FrameType => FrameType.AeroL;
     public bool CanHandleAirframe(JsonElement rawAirframe)
@@ -42,6 +44,21 @@ public class JaeroFrameStrategy(ILogger<JaeroFrameStrategy> logger) : IDecoderSt
             DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground,
         };
         
-        return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(), source, destination);
+        var protocolStrategy = GetProtocolStrategy(isu.Clone());
+        
+        if (protocolStrategy is null)
+        {
+            logger.LogDebug("Strategy for this protocol not implemented... {Frame}", Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(rawAirframe)));
+            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(), source, destination);
+        }
+
+        var protocol = await protocolStrategy.HandleProtocolAsync(isu, cancellationToken).ConfigureAwait(false);
+        
+        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(), source, destination, protocol: protocol);
+    }
+    
+    private IJaeroProtocolStrategy? GetProtocolStrategy(JsonElement avlc)
+    {
+        return protocolStrategies.FirstOrDefault(strategy => strategy.CanHandleProtocol(avlc));
     }
 }

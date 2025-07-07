@@ -19,7 +19,7 @@ public class Airframe
     
     
 
-    public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination, double? signalLevel = null, double? noiseLevel = null)
+    public static Airframe Create(FrameType frameType, ProtocolType protocolType, string channel, Source source, Destination destination, double? signalLevel = null, double? noiseLevel = null, object? protocol = null)
     {
         return new Airframe
         {
@@ -30,6 +30,7 @@ public class Airframe
             Destination = destination,
             SignalLevel = signalLevel,
             NoiseLevel = noiseLevel,
+            Protocol = protocol
         };
     }
 

@@ -1,6 +1,7 @@
 using Aviator.Airframe.Config;
 using Aviator.Airframe.Frames;
 using Aviator.Airframe.Frames.Strategies;
+using Aviator.Airframe.Frames.Strategies.AeroL.Jaero.Protocol;
 using Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl.Protocol;
 using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2.Protocol;
 using Aviator.Airframe.Metrics;
@@ -11,6 +12,7 @@ using Aviator.Global.DependencyInjection;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -43,6 +45,7 @@ public static class AirframeExtension
         
         // Inject all decoder specific protocol strategies
         builder.Services.AddAllImplementations<IDumpVdl2ProtocolStrategy>();
+        builder.Services.AddAllImplementations<IJaeroProtocolStrategy>();
         builder.Services.AddAllImplementations<IDumpHfdlFrameStrategy>();
         
         // Inject all decoder strategies
@@ -57,7 +60,7 @@ public static class AirframeExtension
             var decoderStrategies = sp.GetRequiredService<List<IDecoderStrategy>>();
             var outputManager = sp.GetRequiredService<IAirframeOutputManager>();
             var airframeMetrics = sp.GetRequiredService<AirframeMetrics>();
-            var airframeHub = sp.GetRequiredService<AirframeHub>();
+            var airframeHub = sp.GetRequiredService<IHubContext<AirframeHub>>();
             return new AirframeHandler(logger, decoderStrategies, outputManager, airframeMetrics, airframeHub);
         });
         
