@@ -31,7 +31,7 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             return;
         }
 
-        if (airframe.ProtocolType == ProtocolType.Acars)
+        if (airframe is { FrameType: FrameType.Vdl2, ProtocolType: ProtocolType.Acars })
         {
             var hasVdl2 = rawAirframe.TryGetProperty("vdl2", out var vdl2);
             var hasAvlc = vdl2.TryGetProperty("avlc", out var avlc);
