@@ -19,12 +19,21 @@ public class DumpVdl2AcarsStrategy(ILogger<DumpVdl2AcarsStrategy> logger) : IDum
         logger.LogDebug("Handling Acars here");
         
         var hasAcars = protocol.TryGetProperty("acars", out var acars);
+
+        var hasLabel = acars.TryGetProperty("label", out var label);
+        var hasReg = acars.TryGetProperty("reg", out var reg);
+        var hasMsgText = acars.TryGetProperty("msg_text", out var msgText);
+
+        if (!hasLabel && !hasReg && !hasMsgText)
+        {
+            return Task.FromResult(new object());
+        }
         
         var protocolResult = new Entities.Acars
         {
-            Label = acars.GetProperty("label").GetString() ?? string.Empty,
-            Registration = acars.GetProperty("reg").GetString() ?? string.Empty,
-            Text = acars.GetProperty("msg_text").GetString() ?? string.Empty
+            Label = label.GetString() ?? string.Empty,
+            Registration = reg.GetString() ?? string.Empty,
+            Text = msgText.GetString() ?? string.Empty
         };
         
         return Task.FromResult<object>(protocolResult);
