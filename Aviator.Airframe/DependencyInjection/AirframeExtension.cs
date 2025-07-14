@@ -44,12 +44,12 @@ public static class AirframeExtension
         });
         
         // Inject all decoder specific protocol strategies
-        builder.Services.AddAllImplementations<IDumpVdl2ProtocolStrategy>();
-        builder.Services.AddAllImplementations<IJaeroProtocolStrategy>();
-        builder.Services.AddAllImplementations<IDumpHfdlFrameStrategy>();
+        builder.Services.AddAllImplementations<IDumpVdl2ProtocolStrategy>(ServiceLifetime.Singleton);
+        builder.Services.AddAllImplementations<IJaeroProtocolStrategy>(ServiceLifetime.Singleton);
+        builder.Services.AddAllImplementations<IDumpHfdlProtocolStrategy>(ServiceLifetime.Singleton);
         
         // Inject all decoder strategies
-        builder.Services.AddAllImplementations<IDecoderStrategy>();
+        builder.Services.AddAllImplementations<IDecoderStrategy>(ServiceLifetime.Singleton);
 
         builder.Services.AddSingleton<AirframeHub>();
         builder.Services.AddSingleton<AirframeMetrics>();

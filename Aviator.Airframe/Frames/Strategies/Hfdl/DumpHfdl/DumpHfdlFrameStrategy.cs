@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl;
 
-public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<IDumpHfdlFrameStrategy> protocolStrategies) : IDecoderStrategy
+public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<IDumpHfdlProtocolStrategy> protocolStrategies) : IDecoderStrategy
 {
     public FrameType FrameType => FrameType.Hfdl;
 
@@ -72,8 +72,21 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground
         };
 
-        // TODO implement ProtocolStrategy
+        var protocolStrategy = GetProtocolStrategy(lpdu.Clone());
 
-        return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);
+        if (protocolStrategy is null)
+        {
+            logger.LogDebug("Strategy for this protocol not implemented...");
+            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);    
+        }
+
+        var protocol = await protocolStrategy.HandleProtocolAsync(lpdu, cancellationToken);
+        
+        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, protocol);
+    }
+
+    private IDumpHfdlProtocolStrategy? GetProtocolStrategy(JsonElement lpdu)
+    {
+        return protocolStrategies.FirstOrDefault(strategy => strategy.CanHandleProtocol(lpdu));
     }
 }
