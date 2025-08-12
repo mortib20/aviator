@@ -39,6 +39,7 @@ try
     builder.Services.AddSignalR();
 
     builder.AddAviatorInfluxDb();
+    builder.AddQuestDb();
     builder.AddNetworkUtilities();
     
     builder.AddAirframeExtension();
