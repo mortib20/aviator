@@ -1,3 +1,4 @@
+using Aviator.Network.Config;
 using Aviator.Network.Input.Implementation;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +14,11 @@ public class InputBuilder(ILoggerFactory loggerFactory) : IBuilder<IInput>
             Protocol.Udp => CreateUdpInput(host, port),
             _ => throw new ArgumentOutOfRangeException(nameof(protocol), protocol, null)
         };
+    }
+    
+    public IInput Create(EndpointConfig endpointConfig)
+    {
+        return Create(endpointConfig.Protocol, endpointConfig.Host, endpointConfig.Port);
     }
 
     private static UdpInput CreateUdpInput(string host, int port)

@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Main", "Aviator.Main\Aviator.Main.csproj", "{0F910EE4-5444-4C5F-AB9E-B4D3423C791B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Acars", "Aviator.Acars\Aviator.Acars.csproj", "{AC4F7046-FBAD-4CC5-87D9-F59128114CDC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Airframe", "Aviator.Airframe\Aviator.Airframe.csproj", "{AC4F7046-FBAD-4CC5-87D9-F59128114CDC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aviator.Network", "Aviator.Network\Aviator.Network.csproj", "{1153F39E-E120-440B-A3A9-0C10A73D6E51}"
 EndProject

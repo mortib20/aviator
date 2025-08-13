@@ -1,11 +1,10 @@
 using System.Text.Json;
-using Aviator.Acars;
-using Aviator.Acars.DependencyInjection;
 using Aviator.Adsb.DependencyInjection;
+using Aviator.Airframe.DependencyInjection;
+using Aviator.Airframe.SignalR;
 using Aviator.Global.DependencyInjection;
 using Aviator.Network.DependencyInjection;
 using Serilog;
-using Serilog.Events;
 
 const string logFormat = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}{Scope}] {Message:lj}{NewLine}{Exception}";
 var logPath = Path.Combine(Environment.CurrentDirectory, "logs");
@@ -14,13 +13,13 @@ if (!Directory.Exists(logPath))
     Directory.CreateDirectory(logPath);
 }
 
-// TODO put logger in config not hardcoded here
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Environment.CurrentDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(outputTemplate: logFormat)
-    .WriteTo.File(Path.Combine(logPath, "aviator-log.txt"), rollingInterval: RollingInterval.Month, outputTemplate: logFormat)
-    .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
-    .MinimumLevel.Override("Microsoft.AspNetCore.Mvc", LogEventLevel.Warning)
-    .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
+    .ReadFrom.Configuration(configuration)
     .CreateLogger();
 
 try
@@ -40,8 +39,10 @@ try
     builder.Services.AddSignalR();
 
     builder.AddAviatorInfluxDb();
+    builder.AddQuestDb();
     builder.AddNetworkUtilities();
-    builder.AddAcarsService();
+    
+    builder.AddAirframeExtension();
     builder.AddAdsbService();
 
     var app = builder.Build();
@@ -56,7 +57,7 @@ try
 
     app.UseResponseCompression();
 
-    app.MapHub<AcarsHub>("/Acars");
+    app.MapHub<AirframeHub>("/Acars");
     app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
 
     await app.RunAsync().ConfigureAwait(false);
