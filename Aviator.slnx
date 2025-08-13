@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Aviator.Adsb\Aviator.Adsb.csproj" Type="Classic C#" />
+  <Project Path="Aviator.Airframe\Aviator.Airframe.csproj" Type="Classic C#" />
+  <Project Path="Aviator.Global\Aviator.Global.csproj" Type="Classic C#" />
+  <Project Path="Aviator.Main\Aviator.Main.csproj" Type="Classic C#" />
+  <Project Path="Aviator.Network\Aviator.Network.csproj" Type="Classic C#" />
+</Solution>
