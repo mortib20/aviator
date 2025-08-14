@@ -8,6 +8,7 @@ public class AirframeOutputManager(ILogger<AirframeOutputManager> logger, Dictio
 {
     public async Task SendToOutputsOfFrameTypeAsync(FrameType frameType, byte[] buffer, CancellationToken cancellationToken = default)
     {
+        using var typeScope = logger.BeginScope(frameType.ToString());
         if (!outputs.TryGetValue(frameType, out var outputList))
         {
             logger.LogWarning("No output defined for {SourceType}", frameType);
@@ -18,6 +19,7 @@ public class AirframeOutputManager(ILogger<AirframeOutputManager> logger, Dictio
         {
             foreach (var output in outputList.ToList())
             {
+                using var endPointScope = logger.BeginScope(output.EndPoint);
                 await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
             }
         }

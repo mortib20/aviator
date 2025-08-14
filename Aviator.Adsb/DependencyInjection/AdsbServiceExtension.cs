@@ -3,8 +3,7 @@ using Aviator.Adsb.Config;
 using Aviator.Adsb.Metrics;
 using Aviator.Adsb.Metrics.Implementation;
 using Aviator.Global.Config;
-using Aviator.Global.Metrics;
-using Aviator.Global.Metrics.Implementation;
+using InfluxDB3.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,7 +43,7 @@ public static class AdsbServiceExtension
             if (metricsConfig.InfluxDb is not null && metricsConfig.InfluxDb!.Enabled)
             {
                 var metricLogger = s.GetRequiredService<ILogger<InfluxDbAdsbMetrics>>();
-                var metric = new InfluxDbAdsbMetrics(s.GetRequiredService<InfluxDbMetrics>(), metricLogger);
+                var metric = new InfluxDbAdsbMetrics(metricLogger, s.GetRequiredService<InfluxDBClient>());
                 metrics.Add(metric);
             }
 

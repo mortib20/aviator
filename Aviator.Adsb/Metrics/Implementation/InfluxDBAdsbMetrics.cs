@@ -1,11 +1,10 @@
-﻿using Aviator.Adsb.Entities;
-using Aviator.Global.Metrics.Implementation;
+﻿using InfluxDB3.Client;
 using InfluxDB3.Client.Write;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Adsb.Metrics.Implementation;
 
-public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMetrics> logger) : IAdsbMetrics
+public class InfluxDbAdsbMetrics(ILogger<InfluxDbAdsbMetrics> logger, InfluxDBClient client) : IAdsbMetrics
 {
     public async Task IncreaseAsync(Dictionary<string, decimal> adsbStats, CancellationToken cancellationToken = default)
     {
@@ -18,7 +17,7 @@ public class InfluxDbAdsbMetrics(InfluxDbMetrics client, ILogger<InfluxDbAdsbMet
                 point.SetField(keyValuePair.Key, keyValuePair.Value);
             }
 
-            await client.WritePointAsync(point, cancellationToken);
+            await client.WritePointAsync(point, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {

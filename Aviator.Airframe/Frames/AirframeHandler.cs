@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Aviator.Airframe.Frames.Strategies;
-using Aviator.Airframe.Metrics;
+using Aviator.Airframe.Metrics.Implementation;
 using Aviator.Airframe.Network;
 using Aviator.Airframe.SignalR;
 using Microsoft.AspNetCore.SignalR;
@@ -23,7 +23,9 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             return;
         }
         
-        await airframeOutputManager.SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, JsonSerializer.SerializeToUtf8Bytes(rawAirframe), cancellationToken).ConfigureAwait(false);
+        await airframeOutputManager
+            .SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, JsonSerializer.SerializeToUtf8Bytes(rawAirframe), cancellationToken)
+            .ConfigureAwait(false);
         
         var airframe = await airframeStrategy.HandleAirframeAsync(rawAirframe, cancellationToken).ConfigureAwait(false);
         
@@ -33,8 +35,9 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             return;
         }
 
-        await airframeMetrics.HandleAirframe(airframe).ConfigureAwait(false);
+        await airframeMetrics.WriteAirframeAsync(airframe, cancellationToken).ConfigureAwait(false);
         
+        // Send to client then acars
         if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL or FrameType.Acars or FrameType.Hfdl, ProtocolType: ProtocolType.Acars, Protocol: not null })
         {
             await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);

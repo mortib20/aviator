@@ -5,12 +5,15 @@ using Aviator.Airframe.Frames.Strategies.AeroL.Jaero.Protocol;
 using Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl.Protocol;
 using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2.Protocol;
 using Aviator.Airframe.Metrics;
+using Aviator.Airframe.Metrics.Implementation;
 using Aviator.Airframe.Network;
 using Aviator.Airframe.Network.Implementation;
 using Aviator.Airframe.SignalR;
-using Aviator.Global.DependencyInjection;
+using Aviator.Global.Extensions.Service;
+using Aviator.Global.TimeSeries;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
+using InfluxDB3.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -52,7 +55,33 @@ public static class AirframeExtension
         builder.Services.AddAllImplementations<IDecoderStrategy>(ServiceLifetime.Singleton);
 
         builder.Services.AddSingleton<AirframeHub>();
-        builder.Services.AddSingleton<AirframeMetrics>();
+        builder.Services.AddSingleton<AirframeMetrics>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<AirframeHandler>>();
+            using var scope = logger.BeginScope(nameof(AirframeHandler));
+            
+            var enabledMetrics = new List<IAirframeMetric>();
+
+            var influxDbClient = sp.GetService<InfluxDBClient>();
+            
+            if (influxDbClient is not null)
+            {
+                var influxDbMetric = new InfluxDbAirframeMetric(sp.GetRequiredService<ILogger<InfluxDbAirframeMetric>>(), influxDbClient);
+                enabledMetrics.Add(influxDbMetric);
+            }
+                
+            var questDbClient = sp.GetService<QuestDbClient>();
+
+            if (questDbClient is not null)
+            {
+                var questDbMetric = new QuestDbAirframeMetric(sp.GetRequiredService<ILogger<QuestDbAirframeMetric>>(), questDbClient);
+                enabledMetrics.Add(questDbMetric);
+            }
+            
+            logger.LogInformation("Enabled Metrics: {EnabledMetrics}", string.Join(',', enabledMetrics.Select(s => s.GetType().Name)));
+            
+            return new AirframeMetrics(sp.GetRequiredService<ILogger<AirframeMetrics>>(), enabledMetrics);
+        });
         
         builder.Services.AddSingleton<AirframeHandler>(sp =>
         {
@@ -84,6 +113,7 @@ public static class AirframeExtension
                 );
 
         var logger = s.GetRequiredService<ILogger<FrameType>>();
+        using var scope = logger.BeginScope(nameof(AirframeHandler));
         
         foreach (var (key, value) in outputDictionary)
         {

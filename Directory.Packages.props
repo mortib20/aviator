@@ -4,6 +4,10 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Demystifier" Version="1.0.3" />
+    <PackageVersion Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.3" />
     <PackageVersion Include="InfluxDB3.Client" Version="1.4.0-dev.1720" />
     <PackageVersion Include="net-questdb-client" Version="3.0.0" />
