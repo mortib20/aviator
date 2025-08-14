@@ -78,7 +78,7 @@ public static class AirframeExtension
                 enabledMetrics.Add(questDbMetric);
             }
             
-            logger.LogInformation("Enabled Metrics: {EnabledMetrics}", string.Join(',', enabledMetrics.Select(s => s.GetType().Name)));
+            logger.LogInformation("Enabled Metrics: {EnabledMetrics}", string.Join(", ", enabledMetrics.Select(s => s.GetType().Name)));
             
             return new AirframeMetrics(sp.GetRequiredService<ILogger<AirframeMetrics>>(), enabledMetrics);
         });
