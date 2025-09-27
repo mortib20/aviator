@@ -1,3 +1,4 @@
+using Aviator.Airframe.Frames.Entities;
 using Aviator.Global.TimeSeries;
 using Microsoft.Extensions.Logging;
 
@@ -16,9 +17,21 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
             .Column("value", 1)
             .AtAsync(DateTime.UtcNow, cancellationToken)
             .ConfigureAwait(false);
-        
+
+        // Handle Acars Protocol
+        if (airframe.Position is not null)
+        {
+            await sender.Table("airframePositions")
+                .Symbol("icao", string.IsNullOrEmpty(airframe.Icao) ? null : airframe.Icao)
+                .Symbol("frameType", airframe.FrameType.ToString())
+                .Column("latitude", airframe.Position.Latitude)
+                .Column("longitude", airframe.Position.Longitude)
+                .AtAsync(DateTime.UtcNow, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         // noise and signal level
-        
+
         await sender.SendAsync(cancellationToken).ConfigureAwait(false);
     }
 }

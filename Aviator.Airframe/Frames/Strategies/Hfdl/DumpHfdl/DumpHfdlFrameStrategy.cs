@@ -72,17 +72,52 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground
         };
 
-        var protocolStrategy = GetProtocolStrategy(lpdu.Clone());
+        // ICAO
+        JsonElement lpduAcInfoIcao = default;
+        JsonElement sourceAcInfoIcao = default;
 
+        var lpduAcInfoHasIcao =
+            lpdu.TryGetProperty("ac_info", out var acInfo) &&
+            acInfo.TryGetProperty("icao", out lpduAcInfoIcao) &&
+            lpduAcInfoIcao.ValueKind == JsonValueKind.String;
+
+        var sourceAcInfoHasIcao =
+            rawSource.TryGetProperty("ac_info", out var sourceAcInfo) &&
+            sourceAcInfo.TryGetProperty("icao", out sourceAcInfoIcao) &&
+            sourceAcInfoIcao.ValueKind == JsonValueKind.String;
+
+        var icao = lpduAcInfoHasIcao
+            ? lpduAcInfoIcao.ToString()
+            : (sourceAcInfoHasIcao ? sourceAcInfoIcao.ToString() : null);
+        // ICAO End
+        
+        // HFNPDU
+        var hasHfnpdu = lpdu.TryGetProperty("hfnpdu", out var hfnpdu);
+        // HFNPDU End
+        // Position
+        JsonElement pos = default;
+        var hasPosition = hasHfnpdu && hfnpdu.TryGetProperty("pos", out pos);
+        var position = hasHfnpdu && hasPosition &&
+                       pos.TryGetProperty("lat", out var lat) &&
+                       pos.TryGetProperty("lon", out var lon) &&
+                       lat.GetDouble() < 180.0 &&
+                       lon.GetDouble() < 180.0
+            ? Position.Create(true, lat.GetDouble(), lon.GetDouble(), -1)
+            : null;
+        
+        // Position End
+
+        var protocolStrategy = GetProtocolStrategy(lpdu.Clone());
+        
         if (protocolStrategy is null)
         {
             logger.LogDebug("Strategy for this protocol not implemented...");
-            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);    
+            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, position: position, icao: icao);    
         }
 
         var protocol = await protocolStrategy.HandleProtocolAsync(lpdu, cancellationToken);
         
-        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, protocol);
+        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, protocol, position, icao);
     }
 
     private IDumpHfdlProtocolStrategy? GetProtocolStrategy(JsonElement lpdu)
