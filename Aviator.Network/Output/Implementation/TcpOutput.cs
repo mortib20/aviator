@@ -33,6 +33,7 @@ public sealed class TcpOutput : IOutput, IDisposable
 
     private async Task ConnectionChecker()
     {
+        using var scope = _logger.BeginScope($"Tcp@{_host}:{_port}");
         if (_connected)
         {
             return;
@@ -60,6 +61,7 @@ public sealed class TcpOutput : IOutput, IDisposable
 
     public async ValueTask WriteAsync(byte[] buffer, CancellationToken cancellationToken = default)
     {
+        using var scope = _logger.BeginScope($"Tcp@{_host}:{_port}");
         if (_client is null || !_connected)
         {
             return;
