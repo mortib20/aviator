@@ -22,7 +22,7 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
         if (airframe.Position is not null)
         {
             await sender.Table("airframePositions")
-                .Symbol("icao", string.IsNullOrEmpty(airframe.Icao) ? airframe.Destination.Address : airframe.Icao)
+                .Symbol("icao", string.IsNullOrEmpty(airframe.Icao) ? airframe.Source.Address : airframe.Icao)
                 .Symbol("frameType", airframe.FrameType.ToString())
                 .Column("latitude", (double)airframe.Position.Latitude)
                 .Column("longitude", (double)airframe.Position.Longitude)
