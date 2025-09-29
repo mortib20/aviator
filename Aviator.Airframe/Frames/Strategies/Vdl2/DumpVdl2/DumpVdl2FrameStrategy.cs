@@ -59,17 +59,25 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground,
         };
 
+        var icao = source.SourceType == SourceType.Aircraft ? source.Address : destination.Address;
+
         var protocolStrategy = GetProtocolStrategy(avlc.Clone());
 
         if (protocolStrategy is null)
         {
             logger.LogDebug("Strategy for this protocol not implemented... {Frame}", Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(rawAirframe)));
-            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel);
+            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, icao: icao);
         }
 
         var protocol = await protocolStrategy.HandleProtocolAsync(avlc, cancellationToken).ConfigureAwait(false);
 
-        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, protocol);
+        Position? position = null;
+        if (protocol is Xid { Position: not null } xid)
+        {
+            position = xid.Position;
+        }
+        
+        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(CultureInfo.InvariantCulture), source, destination, signalLevel, noiseLevel, protocol, position: position, icao: icao);
     }
 
     private IDumpVdl2ProtocolStrategy? GetProtocolStrategy(JsonElement avlc)

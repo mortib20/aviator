@@ -24,8 +24,8 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
             await sender.Table("airframePositions")
                 .Symbol("icao", string.IsNullOrEmpty(airframe.Icao) ? null : airframe.Icao)
                 .Symbol("frameType", airframe.FrameType.ToString())
-                .Column("latitude", airframe.Position.Latitude)
-                .Column("longitude", airframe.Position.Longitude)
+                .Column("latitude", (double)airframe.Position.Latitude)
+                .Column("longitude", (double)airframe.Position.Longitude)
                 .AtAsync(DateTime.UtcNow, cancellationToken)
                 .ConfigureAwait(false);
         }

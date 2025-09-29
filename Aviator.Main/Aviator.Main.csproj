@@ -25,4 +25,10 @@
         <PackageReference Include="Serilog.Sinks.File" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="aviator.ico">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

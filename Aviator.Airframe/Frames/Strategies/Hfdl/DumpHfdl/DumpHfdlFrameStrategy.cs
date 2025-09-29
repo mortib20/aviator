@@ -100,9 +100,9 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
         var position = hasHfnpdu && hasPosition &&
                        pos.TryGetProperty("lat", out var lat) &&
                        pos.TryGetProperty("lon", out var lon) &&
-                       lat.GetDouble() < 180.0 &&
-                       lon.GetDouble() < 180.0
-            ? Position.Create(true, lat.GetDouble(), lon.GetDouble(), -1)
+                       lat.GetDecimal() < 180 &&
+                       lon.GetDecimal() < 180
+            ? Position.Create(true, lat.GetDecimal(), lon.GetDecimal(), -1)
             : null;
         
         // Position End
