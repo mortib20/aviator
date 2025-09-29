@@ -49,6 +49,74 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
             Text = rawAirframe.GetProperty("text").GetString() ?? ""
         };
 
-        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel, protocol: acars);
+        var position = TryExtractPositionFromLibacars(rawAirframe);
+
+        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel, protocol: acars, position: position);
+    }
+    
+    private static Position? TryExtractPositionFromLibacars(JsonElement rawAirframe)
+    {
+        if (!rawAirframe.TryGetProperty("libacars", out var libacars))
+        {
+            return null;
+        }
+
+        if (!libacars.TryGetProperty("arinc622", out var arinc))
+        {
+            return null;
+        }
+
+        if (!arinc.TryGetProperty("adsc", out var adsc))
+        {
+            return null;
+        }
+
+        if (!adsc.TryGetProperty("tags", out var tags) || tags.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        foreach (var tag in tags.EnumerateArray())
+        {
+            if (tag.TryGetProperty("basic_report", out var basic))
+            {
+                if (basic.TryGetProperty("lat", out var latProp)
+                    && basic.TryGetProperty("lon", out var lonProp)
+                    && latProp.TryGetDecimal(out var lat)
+                    && lonProp.TryGetDecimal(out var lon))
+                {
+                    decimal alt = 0;
+                    if (basic.TryGetProperty("alt", out var altProp) && altProp.TryGetDecimal(out var parsedAlt))
+                    {
+                        alt = parsedAlt;
+                    }
+
+                    return Position.Create(true, lat, lon, alt);
+                }
+            }
+
+            // predicted_route.next_wpt oder next_next_wpt
+            // if (tag.TryGetProperty("predicted_route", out var route))
+            // {
+            //     if (route.TryGetProperty("next_wpt", out var wpt))
+            //     {
+            //         if (wpt.TryGetProperty("lat", out var latProp)
+            //             && wpt.TryGetProperty("lon", out var lonProp)
+            //             && latProp.TryGetDecimal(out var lat)
+            //             && lonProp.TryGetDecimal(out var lon))
+            //         {
+            //             decimal alt = 0;
+            //             if (wpt.TryGetProperty("alt", out var altProp) && altProp.TryGetDecimal(out var parsedAlt))
+            //             {
+            //                 alt = parsedAlt;
+            //             }
+            //
+            //             return Position.Create(false, lat, lon, alt); // false = predicted
+            //         }
+            //     }
+            // }
+        }
+
+        return null;
     }
 }
