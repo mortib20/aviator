@@ -44,7 +44,7 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
 
         while (client.Connected)
         {
-            var buffer = new byte[MaxBufferSize];
+            var buffer = new byte[8192];
             var length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
 
             if (length == 0 || !client.Connected)

@@ -31,6 +31,17 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
         }
 
         // noise and signal level
+        if (airframe.SignalLevel is not null)
+        {
+            var signalLevel = (double)airframe.SignalLevel;
+            
+            await sender.Table("airframesSignal")
+                .Symbol("channel", airframe.Channel)
+                .Symbol("frameType", airframe.FrameType.ToString())
+                .Column("value", signalLevel)
+                .AtAsync(DateTime.UtcNow, cancellationToken)
+                .ConfigureAwait(false);
+        }
 
         await sender.SendAsync(cancellationToken).ConfigureAwait(false);
     }

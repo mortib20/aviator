@@ -43,18 +43,21 @@ public class JaeroFrameStrategy(ILogger<JaeroFrameStrategy> logger, List<IJaeroP
             Address = rawDestination.GetProperty("addr").GetString() ?? "000000",
             DestinationType = rawDestination.GetProperty("type").GetString() == "Aircraft" ? DestinationType.Aircraft : DestinationType.Ground,
         };
+
+        var ebNo = rawAirframe.TryGetProperty("eb_no", out var ebNoEl) && ebNoEl.ValueKind == JsonValueKind.Number
+            ? ebNoEl.GetDouble() : 0;
         
         var protocolStrategy = GetProtocolStrategy(isu.Clone());
         
         if (protocolStrategy is null)
         {
             logger.LogDebug("Strategy for this protocol not implemented... {Frame}", Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(rawAirframe)));
-            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(), source, destination);
+            return Entities.Airframe.Create(FrameType, ProtocolType.Unknown, freq.ToString(), source, destination, signalLevel: ebNo);
         }
 
         var protocol = await protocolStrategy.HandleProtocolAsync(isu, cancellationToken).ConfigureAwait(false);
         
-        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(), source, destination, protocol: protocol);
+        return Entities.Airframe.Create(FrameType, protocolStrategy.ProtocolType, freq.ToString(), source, destination, protocol: protocol, signalLevel: ebNo);
     }
     
     private IJaeroProtocolStrategy? GetProtocolStrategy(JsonElement avlc)
