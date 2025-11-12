@@ -42,6 +42,8 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
                 .AtAsync(DateTime.UtcNow, cancellationToken)
                 .ConfigureAwait(false);
         }
+        
+        logger.LogDebug("Send stuff to QuestDB");
 
         await sender.SendAsync(cancellationToken).ConfigureAwait(false);
     }
