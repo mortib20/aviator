@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using InfluxDB3.Client;
 using InfluxDB3.Client.Write;
 using Microsoft.Extensions.Logging;
@@ -62,5 +63,10 @@ public class InfluxDbAirframeMetric(ILogger<InfluxDbAirframeMetric> logger, Infl
             
             await WritePointAsync(signalNoise, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    public Task WriteCounterAsync(ConcurrentDictionary<AirframeCounterKey, int> aggregatedCount, DateTime timestamp, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

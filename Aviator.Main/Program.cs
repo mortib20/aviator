@@ -2,7 +2,6 @@ using System.Text.Json;
 using Aviator.Adsb.DependencyInjection;
 using Aviator.Airframe.DependencyInjection;
 using Aviator.Airframe.SignalR;
-using Aviator.Global.Extensions;
 using Aviator.Global.Extensions.TimeSeries;
 using Aviator.Network.DependencyInjection;
 using Serilog;
@@ -16,8 +15,9 @@ if (!Directory.Exists(logPath))
 }
 
 Log.Logger = new LoggerConfiguration()
+    //.MinimumLevel.Debug()
     .Enrich.WithDemystifiedStackTraces()
-    .WriteTo.Console(LogEventLevel.Information, logFormat)
+    .WriteTo.Console(outputTemplate: logFormat)
     .WriteTo.File(
         Path.Combine(logPath, "aviator.txt"),
         restrictedToMinimumLevel: LogEventLevel.Verbose,

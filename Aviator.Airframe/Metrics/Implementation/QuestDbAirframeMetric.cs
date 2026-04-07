@@ -1,29 +1,23 @@
-using Aviator.Airframe.Frames.Entities;
+using System.Collections.Concurrent;
 using Aviator.Global.TimeSeries;
 using Microsoft.Extensions.Logging;
+using QuestDB.Senders;
 
 namespace Aviator.Airframe.Metrics.Implementation;
 
 public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestDbClient questDbClient) : IAirframeMetric
 {
+    private readonly ISender _sender = questDbClient.GetSender();
+    
     public async Task WriteAirframeAsync(Frames.Entities.Airframe airframe, CancellationToken cancellationToken = default)
     {
-        using var sender = questDbClient.GetSender();
-
-        await sender.Table("airframes")
-            .Symbol("channel", airframe.Channel)
-            .Symbol("frameType", airframe.FrameType.ToString())
-            .Symbol("protocolType", airframe.ProtocolType.ToString())
-            .Column("value", 1)
-            .AtAsync(DateTime.UtcNow, cancellationToken)
-            .ConfigureAwait(false);
 
         // Handle Acars Protocol
         if (airframe.Position is not null)
         {
-            await sender.Table("airframePositions")
-                .Symbol("icao", string.IsNullOrEmpty(airframe.Icao) ? airframe.Source.Address : airframe.Icao)
+            await _sender.Table("airframePositions")
                 .Symbol("frameType", airframe.FrameType.ToString())
+                .Column("icao", string.IsNullOrEmpty(airframe.Icao) ? airframe.Source.Address : airframe.Icao)
                 .Column("latitude", (double)airframe.Position.Latitude)
                 .Column("longitude", (double)airframe.Position.Longitude)
                 .AtAsync(DateTime.UtcNow, cancellationToken)
@@ -35,7 +29,7 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
         {
             var signalLevel = (double)airframe.SignalLevel;
             
-            await sender.Table("airframesSignal")
+            await _sender.Table("airframesSignal")
                 .Symbol("channel", airframe.Channel)
                 .Symbol("frameType", airframe.FrameType.ToString())
                 .Column("value", signalLevel)
@@ -45,6 +39,23 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
         
         logger.LogDebug("Send stuff to QuestDB");
 
+        // await sender.SendAsync(cancellationToken).ConfigureAwait(false);
+    }
+    
+    public async Task WriteCounterAsync(ConcurrentDictionary<AirframeCounterKey, int> aggregatedCount, DateTime timestamp, CancellationToken cancellationToken = default)
+    {
+        using var sender = questDbClient.GetSender();
+
+        foreach (var kvp in aggregatedCount)
+        {
+            await sender.Table("airframes")
+                .Symbol("channel", kvp.Key.Channel)
+                .Symbol("frameType", kvp.Key.FrameType.ToString())
+                .Column("value", kvp.Value)
+                .AtAsync(timestamp, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        
         await sender.SendAsync(cancellationToken).ConfigureAwait(false);
     }
 }

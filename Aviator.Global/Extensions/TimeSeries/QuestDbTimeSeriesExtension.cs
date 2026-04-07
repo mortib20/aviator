@@ -23,7 +23,8 @@ public static class QuestDbTimeSeriesExtension
             return;
         }
 
-        var connectionString = $"http::addr={questDbConfig.Host};";
+        // Flush every 1000 rows, or each minute
+        var connectionString = $"http::addr={questDbConfig.Host};auto_flush=on;auto_flush_rows=1000;auto_flush_interval=61000;";
         
         builder.Services.AddSingleton(new QuestDbClient(connectionString));
     }

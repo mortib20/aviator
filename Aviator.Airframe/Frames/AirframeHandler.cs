@@ -35,7 +35,7 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             return;
         }
 
-        await airframeMetrics.WriteAirframeAsync(airframe, cancellationToken).ConfigureAwait(false);
+        await airframeMetrics.HandleAirframeAsync(airframe, cancellationToken).ConfigureAwait(false);
         
         // Send to client then acars
         if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL or FrameType.Acars or FrameType.Hfdl, ProtocolType: ProtocolType.Acars, Protocol: not null })
