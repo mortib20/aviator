@@ -14,7 +14,7 @@ public class AirframeInputManager(ILogger<AirframeInputManager> logger, IInput i
     
     public Task StartAsync(CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Start Input on {Endpoint}", input.EndPoint);
+        logger.LogInformation("Start Input on {Endpoint}", input.ToString());
 
         return input.ReceiveAsync(OnReceive, cancellationToken).WaitAsync(cancellationToken);
     }
