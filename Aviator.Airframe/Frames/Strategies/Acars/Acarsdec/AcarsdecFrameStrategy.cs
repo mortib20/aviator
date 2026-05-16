@@ -28,11 +28,15 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
             return null;
         }
 
-        var signalLevel = rawAirframe.GetProperty("level").GetDouble();
+        if (!rawAirframe.TryGetProperty("level", out var levelEl) || !levelEl.TryGetDouble(out var signalLevel))
+        {
+            logger.LogWarning("Frame does not contain level...");
+            return null;
+        }
 
         var source = new Source
         {
-            Address = rawAirframe.GetProperty("tail").ToString(),
+            Address = rawAirframe.GetProperty("tail").GetString() ?? string.Empty,
             SourceType = SourceType.Aircraft
         };
 
@@ -51,7 +55,14 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
 
         var position = TryExtractPositionFromLibacars(rawAirframe);
 
-        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString().Replace(".", "")}000", source, destination, signalLevel: signalLevel, protocol: acars, position: position);
+        if (!freq.TryGetDouble(out var freqMhz))
+        {
+            logger.LogWarning("Frame frequency is not a valid number...");
+            return null;
+        }
+        var channel = ((long)Math.Round(freqMhz * 1_000_000)).ToString();
+
+        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, channel, source, destination, signalLevel: signalLevel, protocol: acars, position: position);
     }
     
     private static Position? TryExtractPositionFromLibacars(JsonElement rawAirframe)

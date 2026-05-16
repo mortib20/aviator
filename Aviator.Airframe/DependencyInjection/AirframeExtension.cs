@@ -57,30 +57,24 @@ public static class AirframeExtension
         builder.Services.AddSingleton<AirframeHub>();
         builder.Services.AddSingleton<AirframeMetrics>(sp =>
         {
-            var logger = sp.GetRequiredService<ILogger<AirframeHandler>>();
-            using var scope = logger.BeginScope(nameof(AirframeHandler));
-            
             var enabledMetrics = new List<IAirframeMetric>();
 
             var influxDbClient = sp.GetService<InfluxDBClient>();
-            
             if (influxDbClient is not null)
             {
-                var influxDbMetric = new InfluxDbAirframeMetric(sp.GetRequiredService<ILogger<InfluxDbAirframeMetric>>(), influxDbClient);
-                enabledMetrics.Add(influxDbMetric);
+                enabledMetrics.Add(new InfluxDbAirframeMetric(sp.GetRequiredService<ILogger<InfluxDbAirframeMetric>>(), influxDbClient));
             }
-                
-            var questDbClient = sp.GetService<QuestDbClient>();
 
+            var questDbClient = sp.GetService<QuestDbClient>();
             if (questDbClient is not null)
             {
-                var questDbMetric = new QuestDbAirframeMetric(sp.GetRequiredService<ILogger<QuestDbAirframeMetric>>(), questDbClient);
-                enabledMetrics.Add(questDbMetric);
+                enabledMetrics.Add(new QuestDbAirframeMetric(sp.GetRequiredService<ILogger<QuestDbAirframeMetric>>(), questDbClient));
             }
-            
-            logger.LogInformation("Enabled Metrics: {EnabledMetrics}", string.Join(", ", enabledMetrics.Select(s => s.GetType().Name)));
-            
-            return new AirframeMetrics(sp.GetRequiredService<ILogger<AirframeMetrics>>(), enabledMetrics);
+
+            var metricsLogger = sp.GetRequiredService<ILogger<AirframeMetrics>>();
+            metricsLogger.LogInformation("Enabled Metrics: {EnabledMetrics}", string.Join(", ", enabledMetrics.Select(s => s.GetType().Name)));
+
+            return new AirframeMetrics(metricsLogger, enabledMetrics);
         });
         
         builder.Services.AddSingleton<AirframeHandler>(sp =>

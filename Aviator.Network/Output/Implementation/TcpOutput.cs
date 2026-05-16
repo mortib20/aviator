@@ -110,17 +110,22 @@ public sealed class TcpOutput : IOutput, IDisposable
             return;
         }
 
-        _semaphoreSlim.Wait();
+        _connectionTimer.Stop();
+        _connectionTimer.Dispose();
+
+        var acquired = _semaphoreSlim.Wait(TimeSpan.FromSeconds(5));
         try
         {
             _client?.Dispose();
-            _connectionTimer.Stop();
-            _connectionTimer.Dispose();
         }
         finally
         {
-            _semaphoreSlim.Release();
-            _semaphoreSlim.Dispose();   
+            if (acquired)
+            {
+                _semaphoreSlim.Release();
+            }
+
+            _semaphoreSlim.Dispose();
         }
     }
 }

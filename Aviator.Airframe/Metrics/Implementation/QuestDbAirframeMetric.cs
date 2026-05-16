@@ -5,14 +5,12 @@ using QuestDB.Senders;
 
 namespace Aviator.Airframe.Metrics.Implementation;
 
-public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestDbClient questDbClient) : IAirframeMetric
+public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestDbClient questDbClient) : IAirframeMetric, IDisposable
 {
     private readonly ISender _sender = questDbClient.GetSender();
-    
+
     public async Task WriteAirframeAsync(Frames.Entities.Airframe airframe, CancellationToken cancellationToken = default)
     {
-
-        // Handle Acars Protocol
         if (airframe.Position is not null)
         {
             await _sender.Table("airframePositions")
@@ -24,24 +22,21 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
                 .ConfigureAwait(false);
         }
 
-        // noise and signal level
         if (airframe.SignalLevel is not null)
         {
-            var signalLevel = (double)airframe.SignalLevel;
-            
             await _sender.Table("airframesSignal")
                 .Symbol("channel", airframe.Channel)
                 .Symbol("frameType", airframe.FrameType.ToString())
-                .Column("value", signalLevel)
+                .Column("value", (double)airframe.SignalLevel)
                 .AtAsync(DateTime.UtcNow, cancellationToken)
                 .ConfigureAwait(false);
         }
-        
-        logger.LogDebug("Send stuff to QuestDB");
 
-        // await sender.SendAsync(cancellationToken).ConfigureAwait(false);
+        await _sender.SendAsync(cancellationToken).ConfigureAwait(false);
+
+        logger.LogDebug("Sent airframe data to QuestDB");
     }
-    
+
     public async Task WriteCounterAsync(ConcurrentDictionary<AirframeCounterKey, int> aggregatedCount, DateTime timestamp, CancellationToken cancellationToken = default)
     {
         using var sender = questDbClient.GetSender();
@@ -55,7 +50,12 @@ public class QuestDbAirframeMetric(ILogger<QuestDbAirframeMetric> logger, QuestD
                 .AtAsync(timestamp, cancellationToken)
                 .ConfigureAwait(false);
         }
-        
+
         await sender.SendAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        _sender.Dispose();
     }
 }

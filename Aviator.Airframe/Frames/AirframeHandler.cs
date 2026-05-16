@@ -10,10 +10,10 @@ namespace Aviator.Airframe.Frames;
 
 public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecoderStrategy> decoderStrategies, IAirframeOutputManager airframeOutputManager, AirframeMetrics airframeMetrics, IHubContext<AirframeHub> airframeHub)
 {
-    public async Task HandleAirframeAsync(JsonElement rawAirframe, CancellationToken cancellationToken)
+    public async Task HandleAirframeAsync(byte[] rawBytes, JsonElement rawAirframe, CancellationToken cancellationToken)
     {
         using var scope = logger.BeginScope(nameof(AirframeHandler));
-        
+
         logger.LogDebug("{RawAirframe}", rawAirframe);
         var airframeStrategy = GetAirframeStrategy(rawAirframe);
 
@@ -22,9 +22,9 @@ public class AirframeHandler(ILogger<AirframeHandler> logger, ICollection<IDecod
             logger.LogDebug("Strategy for this airframe not implemented...");
             return;
         }
-        
+
         await airframeOutputManager
-            .SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, JsonSerializer.SerializeToUtf8Bytes(rawAirframe), cancellationToken)
+            .SendToOutputsOfFrameTypeAsync(airframeStrategy.FrameType, rawBytes, cancellationToken)
             .ConfigureAwait(false);
         
         var airframe = await airframeStrategy.HandleAirframeAsync(rawAirframe, cancellationToken).ConfigureAwait(false);

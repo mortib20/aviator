@@ -40,7 +40,7 @@ public class IridiumToolkitFrameStrategy(ILogger<IridiumToolkitFrameStrategy> lo
         
         var source = new Source
         {
-            Address = acars.GetProperty("tail").ToString(),
+            Address = acars.GetProperty("tail").GetString() ?? string.Empty,
             SourceType = SourceType.Aircraft
         };
         
@@ -57,6 +57,9 @@ public class IridiumToolkitFrameStrategy(ILogger<IridiumToolkitFrameStrategy> lo
             Text = acars.GetProperty("text").GetString() ?? ""
         };
 
-        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, $"{freq.ToString()[..4]}", source, destination, signalLevel, protocol: acarsFrame);
+        var freqStr = freq.ToString();
+        var channel = freqStr.Length >= 4 ? freqStr[..4] : freqStr;
+
+        return Entities.Airframe.Create(FrameType, ProtocolType.Acars, channel, source, destination, signalLevel, protocol: acarsFrame);
     }
 }

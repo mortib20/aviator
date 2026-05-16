@@ -34,9 +34,9 @@ public class DumpHfdlAcarsStrategy(ILogger<DumpHfdlAcarsStrategy> logger) : IDum
 
         var protocolResult = new Entities.Acars
         {
-            Label = label.GetString() ?? string.Empty,
-            Registration = reg.GetString() ?? string.Empty,
-            Text = msgText.GetString() ?? string.Empty
+            Label = hasLabel ? label.GetString() ?? string.Empty : string.Empty,
+            Registration = hasReg ? reg.GetString() ?? string.Empty : string.Empty,
+            Text = hasMsgText ? msgText.GetString() ?? string.Empty : string.Empty
         };
 
         return Task.FromResult<object>(protocolResult);

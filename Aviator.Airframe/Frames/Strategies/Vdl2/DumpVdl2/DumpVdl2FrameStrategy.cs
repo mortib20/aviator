@@ -33,7 +33,8 @@ public class DumpVdl2FrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             return null;
         }
 
-        var hasFreq = vdl2.GetProperty("freq").TryGetDouble(out var freq);
+        double freq = 0;
+        var hasFreq = vdl2.TryGetProperty("freq", out var freqEl) && freqEl.TryGetDouble(out freq);
         var hasAvlc = vdl2.TryGetProperty("avlc", out var avlc);
 
         if (!hasFreq || !hasAvlc)

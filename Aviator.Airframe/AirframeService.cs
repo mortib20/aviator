@@ -14,14 +14,8 @@ public class AirframeService(ILogger<AirframeService> logger, IAirframeInputMana
         {
             var inputTask = inputManager.StartAsync(stoppingToken);
 
-            while (!stoppingToken.IsCancellationRequested)
+            await foreach (var bytes in inputManager.ChannelReader.ReadAllAsync(stoppingToken).ConfigureAwait(false))
             {
-                if (!inputManager.ChannelReader.TryRead(out var bytes))
-                {
-                    await Task.Delay(1, stoppingToken).ConfigureAwait(false);
-                    continue;
-                }
-
                 try
                 {
                     await HandleBytes(bytes, stoppingToken).ConfigureAwait(false);
@@ -32,7 +26,7 @@ public class AirframeService(ILogger<AirframeService> logger, IAirframeInputMana
                 }
             }
 
-            await inputTask;
+            await inputTask.ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -50,7 +44,7 @@ public class AirframeService(ILogger<AirframeService> logger, IAirframeInputMana
         {
             using var airframe = JsonDocument.Parse(bytes);
 
-            return airframeHandler.HandleAirframeAsync(airframe.RootElement.Clone(), cancellationToken);
+            return airframeHandler.HandleAirframeAsync(bytes, airframe.RootElement.Clone(), cancellationToken);
         }
         catch (JsonException jsonException)
         {

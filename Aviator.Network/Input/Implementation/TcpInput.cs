@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 
@@ -13,51 +13,66 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
     public async Task ReceiveAsync(InputHandler onReceive, CancellationToken cancellationToken = default)
     {
         using var tcpListener = new TcpListener(IPAddress.Parse(host), port);
-        
+
         tcpListener.Start();
-        
+
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
                 var tcpClient = await tcpListener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
 
-                _ = Task.Run(async () => await HandleClientAsync(onReceive, tcpClient, cancellationToken).ConfigureAwait(false), cancellationToken);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await HandleClientAsync(onReceive, tcpClient, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        logger.LogError(ex, "Unhandled error in TCP client handler");
+                    }
+                }, cancellationToken);
             }
             catch (OperationCanceledException)
             {
                 // Ignore
             }
         }
-        
+
         tcpListener.Stop();
     }
 
     private async Task HandleClientAsync(InputHandler handler, TcpClient client,
         CancellationToken cancellationToken = default)
     {
-        var loggerScope = logger.BeginScope(EndPoint);
+        using var loggerScope = logger.BeginScope(EndPoint);
         await using var stream = client.GetStream();
 
         var remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
         logger.LogInformation("Client connected from {RemoteEndPoint}", remoteEndPoint);
 
-        while (client.Connected)
+        try
         {
-            var buffer = new byte[8192];
-            var length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-
-            if (length == 0 || !client.Connected)
+            while (true)
             {
-                logger.LogInformation("Client disconnected from {RemoteEndPoint}", remoteEndPoint);
-                client.Close();
-                break;
+                var buffer = new byte[8192];
+                var length = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+
+                if (length == 0)
+                {
+                    logger.LogInformation("Client disconnected from {RemoteEndPoint}", remoteEndPoint);
+                    client.Close();
+                    break;
+                }
+
+                await handler.Invoke(buffer[..length], cancellationToken).ConfigureAwait(false);
             }
-
-            await handler.Invoke(buffer[..length].ToArray(), cancellationToken).ConfigureAwait(false);
         }
-
-        loggerScope?.Dispose();
+        catch (OperationCanceledException)
+        {
+            client.Close();
+        }
     }
 
     public override string ToString()

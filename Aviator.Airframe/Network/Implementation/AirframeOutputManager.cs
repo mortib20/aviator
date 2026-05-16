@@ -11,13 +11,13 @@ public class AirframeOutputManager(ILogger<AirframeOutputManager> logger, Dictio
         using var typeScope = logger.BeginScope(frameType.ToString());
         if (!outputs.TryGetValue(frameType, out var outputList))
         {
-            logger.LogWarning("No output defined for {SourceType}", frameType);
+            logger.LogDebug("No output defined for {SourceType}", frameType);
             return;
         }
 
         try
         {
-            foreach (var output in outputList.ToList())
+            foreach (var output in outputList)
             {
                 using var endPointScope = logger.BeginScope(output.EndPoint);
                 await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);

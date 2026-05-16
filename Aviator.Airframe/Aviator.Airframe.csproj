@@ -16,6 +16,8 @@
         <PackageReference Include="MongoDB.Driver" />
         <PackageReference Include="net-questdb-client" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
+        <PackageReference Include="SharpCompress" />
+        <PackageReference Include="Snappier" />
     </ItemGroup>
 
     <ItemGroup>

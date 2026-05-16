@@ -9,7 +9,7 @@ namespace Aviator.Airframe.Metrics.Implementation;
 
 public record AirframeCounterKey(string Channel, FrameType FrameType);
 
-public class AirframeMetrics
+public class AirframeMetrics : IDisposable
 {
     private readonly ILogger<AirframeMetrics> _logger;
     private readonly List<IAirframeMetric> _airframeMetrics;
@@ -66,6 +66,12 @@ public class AirframeMetrics
                 _logger.LogError(ex, "Failed to send metric.");
             }
         }
+    }
+
+    public void Dispose()
+    {
+        _sendMetricTimer.Stop();
+        _sendMetricTimer.Dispose();
     }
 
     public async Task HandleAirframeAsync(Frames.Entities.Airframe airframe, CancellationToken cancellationToken = default)

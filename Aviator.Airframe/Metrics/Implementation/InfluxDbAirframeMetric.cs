@@ -65,8 +65,17 @@ public class InfluxDbAirframeMetric(ILogger<InfluxDbAirframeMetric> logger, Infl
         }
     }
 
-    public Task WriteCounterAsync(ConcurrentDictionary<AirframeCounterKey, int> aggregatedCount, DateTime timestamp, CancellationToken cancellationToken = default)
+    public async Task WriteCounterAsync(ConcurrentDictionary<AirframeCounterKey, int> aggregatedCount, DateTime timestamp, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        foreach (var kvp in aggregatedCount)
+        {
+            var point = PointData.Measurement("airframesCounter")
+                .SetTag("channel", kvp.Key.Channel)
+                .SetTag("frameType", kvp.Key.FrameType.ToString())
+                .SetField("value", (long)kvp.Value)
+                .SetTimestamp(timestamp);
+
+            await WritePointAsync(point, cancellationToken).ConfigureAwait(false);
+        }
     }
 }

@@ -8,8 +8,7 @@ namespace Aviator.Global.Extensions.Service
         {
             var interfaceType = typeof(TInterface);
         
-            var implementations = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => a.GetTypes())
+            var implementations = interfaceType.Assembly.GetTypes()
                 .Where(t => t is { IsClass: true, IsAbstract: false } && interfaceType.IsAssignableFrom(t));
 
             foreach (var impl in implementations)

@@ -2,12 +2,11 @@ using System.Globalization;
 using System.Text.Json;
 using Aviator.Airframe.Frames.Entities;
 using Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl.Protocol;
-using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2;
 using Microsoft.Extensions.Logging;
 
 namespace Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl;
 
-public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<IDumpHfdlProtocolStrategy> protocolStrategies) : IDecoderStrategy
+public class DumpHfdlFrameStrategy(ILogger<DumpHfdlFrameStrategy> logger, List<IDumpHfdlProtocolStrategy> protocolStrategies) : IDecoderStrategy
 {
     public FrameType FrameType => FrameType.Hfdl;
 
@@ -32,7 +31,8 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             return null;
         }
 
-        var hasFreq = hfdl.GetProperty("freq").TryGetDouble(out var freq);
+        double freq = 0;
+        var hasFreq = hfdl.TryGetProperty("freq", out var freqEl) && freqEl.TryGetDouble(out freq);
         var hasLpdu = hfdl.TryGetProperty("lpdu", out var lpdu);
         var hasSpdu = hfdl.TryGetProperty("spdu", out var spdu);
 
@@ -55,8 +55,17 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
             return null;
         }
 
-        var signalLevel = hfdl.GetProperty("sig_level").GetDouble();
-        var noiseLevel = hfdl.GetProperty("noise_level").GetDouble();
+        if (!hfdl.TryGetProperty("sig_level", out var sigEl) || !sigEl.TryGetDouble(out var signalLevel))
+        {
+            logger.LogWarning("Frame did not contain sig_level...");
+            return null;
+        }
+
+        if (!hfdl.TryGetProperty("noise_level", out var noiseEl) || !noiseEl.TryGetDouble(out var noiseLevel))
+        {
+            logger.LogWarning("Frame did not contain noise_level...");
+            return null;
+        }
 
         var rawSource = lpdu.GetProperty("src");
         var source = new Source
@@ -100,8 +109,8 @@ public class DumpHfdlFrameStrategy(ILogger<DumpVdl2FrameStrategy> logger, List<I
         var position = hasHfnpdu && hasPosition &&
                        pos.TryGetProperty("lat", out var lat) &&
                        pos.TryGetProperty("lon", out var lon) &&
-                       lat.GetDecimal() < 180 &&
-                       lon.GetDecimal() < 180
+                       lat.GetDecimal() is >= -90 and <= 90 &&
+                       lon.GetDecimal() is >= -180 and <= 180
             ? Position.Create(true, lat.GetDecimal(), lon.GetDecimal(), -1)
             : null;
         
