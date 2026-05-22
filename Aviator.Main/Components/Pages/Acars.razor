@@ -1,0 +1,102 @@
+@page "/acars"
+@implements IAsyncDisposable
+@inject NavigationManager Nav
+
+<PageTitle>ACARS — Aviator</PageTitle>
+
+<div class="d-flex flex-column h-100">
+    <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom border-secondary-subtle">
+        <h6 class="mb-0 fw-semibold">ACARS Messages</h6>
+        <span class="badge rounded-pill @(_connected ? "bg-success" : "bg-danger")">
+            <i class="bi @(_connected ? "bi-circle-fill" : "bi-circle") me-1" style="font-size:.55rem"></i>
+            @(_connected ? "Live" : "Disconnected")
+        </span>
+        <span class="ms-auto text-secondary small">@_messages.Count / @MaxMessages</span>
+        @if (_messages.Count > 0)
+        {
+            <button class="btn btn-sm btn-outline-secondary" @onclick="ClearMessages">
+                <i class="bi bi-trash me-1"></i>Clear
+            </button>
+        }
+    </div>
+
+    <div class="flex-grow-1 overflow-auto p-3">
+        @if (_messages.Count == 0 && _connected)
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                <i class="bi bi-reception-4 display-4 mb-3 text-success opacity-50"></i>
+                <p class="mb-0">Connected — waiting for messages…</p>
+            </div>
+        }
+        else if (!_connected && _messages.Count == 0)
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                <i class="bi bi-wifi-off display-4 mb-3 opacity-50"></i>
+                <p class="mb-0">Connecting to hub…</p>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-2">
+                @foreach (var msg in _messages)
+                {
+                    <AcarsCard Message="msg" />
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private HubConnection? _hub;
+    private bool _connected;
+    private readonly List<Airframe> _messages = [];
+    private const int MaxMessages = 200;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Nav.ToAbsoluteUri("/hub/acars"))
+            .WithAutomaticReconnect()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
+            })
+            .Build();
+
+        _hub.On<Airframe>("Acars", async frame =>
+        {
+            if (_messages.Count >= MaxMessages)
+                _messages.RemoveAt(_messages.Count - 1);
+            _messages.Insert(0, frame);
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _hub.Reconnecting += _ =>
+        {
+            _connected = false;
+            return InvokeAsync(StateHasChanged);
+        };
+
+        _hub.Reconnected += _ =>
+        {
+            _connected = true;
+            return InvokeAsync(StateHasChanged);
+        };
+
+        await _hub.StartAsync();
+        _connected = true;
+    }
+
+    private void ClearMessages()
+    {
+        _messages.Clear();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is not null)
+            await _hub.DisposeAsync();
+    }
+}

@@ -1,0 +1,17 @@
+@page "/"
+@inject IOptions<FrontendConfig> Config
+
+<PageTitle>Aviator</PageTitle>
+
+@if (!string.IsNullOrWhiteSpace(Config.Value.IframeUrl))
+{
+    <iframe src="@Config.Value.IframeUrl" class="w-100 h-100 border-0" allowfullscreen loading="lazy"></iframe>
+}
+else
+{
+    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+        <i class="bi bi-window-fullscreen display-4 mb-3"></i>
+        <p class="mb-1">No iframe URL configured.</p>
+        <small>Set <code>Frontend:IframeUrl</code> in <code>appsettings.json</code>.</small>
+    </div>
+}

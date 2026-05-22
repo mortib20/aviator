@@ -10,16 +10,18 @@
 
     <PropertyGroup>
         <InvariantGlobalization>true</InvariantGlobalization>
+        <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Aviator.Airframe\Aviator.Airframe.csproj" />
-        <ProjectReference Include="..\Aviator.Adsb\Aviator.Adsb.csproj"/>
-        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj"/>
+        <ProjectReference Include="..\Aviator.Adsb\Aviator.Adsb.csproj" />
+        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Serilog.AspNetCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+        <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Enrichers.Demystifier" />
         <PackageReference Include="Serilog.Settings.Configuration" />
         <PackageReference Include="Serilog.Sinks.Console" />

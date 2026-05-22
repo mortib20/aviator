@@ -1,8 +1,9 @@
-using System.Text.Json;
 using Aviator.Adsb.DependencyInjection;
 using Aviator.Airframe.DependencyInjection;
 using Aviator.Airframe.SignalR;
 using Aviator.Global.Extensions.TimeSeries;
+using Aviator.Main.Components;
+using Aviator.Main.Frontend;
 using Aviator.Network.DependencyInjection;
 using Serilog;
 using Serilog.Events;
@@ -41,6 +42,9 @@ try
     builder.Services.AddResponseCompression();
     builder.Services.AddCors();
     builder.Services.AddSignalR();
+    builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+    builder.Services.AddSingleton<PlanespottersService>();
+    builder.Services.Configure<FrontendConfig>(builder.Configuration.GetSection("Frontend"));
 
     builder.AddAviatorInfluxDb();
     builder.AddQuestDb();
@@ -60,9 +64,11 @@ try
     });
 
     app.UseResponseCompression();
+    app.UseStaticFiles();
+    app.UseAntiforgery();
 
-    app.MapHub<AirframeHub>("/Acars");
-    app.MapGet("/", () => JsonSerializer.Serialize("Hello World!"));
+    app.MapHub<AirframeHub>("/hub/acars");
+    app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
     await app.RunAsync().ConfigureAwait(false);
 }
