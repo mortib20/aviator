@@ -52,7 +52,7 @@ public static class AirframeExtension
         if (dbConfig is not null && !string.IsNullOrWhiteSpace(dbConfig.ConnectionString))
         {
             builder.Services.AddDbContextFactory<AviatorDbContext>(options =>
-                options.UseNpgsql(dbConfig.ConnectionString).UseSnakeCaseNamingConvention());
+                options.UseNpgsql(dbConfig.ConnectionString));
         }
 
         builder.Services.AddSingleton<AirframeHandler>(sp =>
