@@ -1,38 +1,59 @@
 @page "/acars"
 @implements IAsyncDisposable
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>ACARS — Aviator</PageTitle>
 
 <div class="d-flex flex-column h-100">
-    <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom border-secondary-subtle">
-        <h6 class="mb-0 fw-semibold">ACARS Messages</h6>
+
+    @* ── Header ──────────────────────────────────────────────── *@
+    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom border-secondary-subtle">
+        <h6 class="mb-0 fw-semibold me-1">ACARS</h6>
         <span class="badge rounded-pill @(_connected ? "bg-success" : "bg-danger")">
             <i class="bi @(_connected ? "bi-circle-fill" : "bi-circle") me-1" style="font-size:.55rem"></i>
             @(_connected ? "Live" : "Disconnected")
         </span>
-        <span class="ms-auto text-secondary small">@_messages.Count / @MaxMessages</span>
-        @if (_messages.Count > 0)
+
+        @foreach (var kvp in _totalCounts.OrderByDescending(x => x.Value))
         {
-            <button class="btn btn-sm btn-outline-secondary" @onclick="ClearMessages">
-                <i class="bi bi-trash me-1"></i>Clear
-            </button>
+            <span class="frame-badge-@kvp.Key.ToLower()">@kvp.Key @kvp.Value</span>
         }
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <span class="text-secondary small">@_messages.Count / @MaxMessages</span>
+            @if (_messages.Count > 0)
+            {
+                <button class="btn btn-sm btn-outline-secondary py-0" @onclick="ClearMessages" title="Clear messages">
+                    <i class="bi bi-trash"></i>
+                </button>
+            }
+        </div>
     </div>
 
-    <div class="flex-grow-1 overflow-auto p-3">
-        @if (_messages.Count == 0 && _connected)
-        {
-            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
-                <i class="bi bi-reception-4 display-4 mb-3 text-success opacity-50"></i>
-                <p class="mb-0">Connected — waiting for messages…</p>
-            </div>
-        }
-        else if (!_connected && _messages.Count == 0)
+    @* ── Pending banner ───────────────────────────────────────── *@
+    @if (_pendingMessages.Count > 0)
+    {
+        <div class="pending-banner" @onclick="FlushPendingAndScrollToTop">
+            <i class="bi bi-arrow-up-circle me-1"></i>
+            @_pendingMessages.Count new message@(_pendingMessages.Count == 1 ? "" : "s") — click to show
+        </div>
+    }
+
+    @* ── Message list ─────────────────────────────────────────── *@
+    <div class="flex-grow-1 overflow-auto p-3" @ref="_scrollContainer" @onscroll="HandleScroll">
+        @if (!_connected && _messages.Count == 0)
         {
             <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
                 <i class="bi bi-wifi-off display-4 mb-3 opacity-50"></i>
                 <p class="mb-0">Connecting to hub…</p>
+            </div>
+        }
+        else if (_messages.Count == 0)
+        {
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                <i class="bi bi-reception-4 display-4 mb-3 text-success opacity-50"></i>
+                <p class="mb-0">Connected — waiting for messages…</p>
             </div>
         }
         else
@@ -45,13 +66,23 @@
             </div>
         }
     </div>
+
 </div>
 
 @code {
     private HubConnection? _hub;
     private bool _connected;
+
     private readonly List<Airframe> _messages = [];
+    private readonly Queue<Airframe> _pendingMessages = new();
+    private readonly Dictionary<string, int> _totalCounts = [];
+
     private const int MaxMessages = 200;
+    private const int MaxPending  = 500;
+
+    private bool _isAtTop = true;
+    private bool _scrollHandling;
+    private ElementReference _scrollContainer;
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,32 +98,72 @@
 
         _hub.On<Airframe>("Acars", async frame =>
         {
-            if (_messages.Count >= MaxMessages)
-                _messages.RemoveAt(_messages.Count - 1);
-            _messages.Insert(0, frame);
+            // Always increment running total for this frame type
+            var key = frame.FrameType.ToString();
+            _totalCounts[key] = _totalCounts.GetValueOrDefault(key) + 1;
+
+            if (_isAtTop)
+            {
+                if (_messages.Count >= MaxMessages)
+                    _messages.RemoveAt(_messages.Count - 1);
+                _messages.Insert(0, frame);
+            }
+            else if (_pendingMessages.Count < MaxPending)
+            {
+                _pendingMessages.Enqueue(frame);
+            }
+
             await InvokeAsync(StateHasChanged);
         });
 
-        _hub.Reconnecting += _ =>
-        {
-            _connected = false;
-            return InvokeAsync(StateHasChanged);
-        };
-
-        _hub.Reconnected += _ =>
-        {
-            _connected = true;
-            return InvokeAsync(StateHasChanged);
-        };
+        _hub.Reconnecting += _ => { _connected = false; return InvokeAsync(StateHasChanged); };
+        _hub.Reconnected  += _ => { _connected = true;  return InvokeAsync(StateHasChanged); };
 
         await _hub.StartAsync();
         _connected = true;
     }
 
-    private void ClearMessages()
+    // Debounced via _scrollHandling flag — only one in-flight JS call at a time
+    private async Task HandleScroll()
     {
-        _messages.Clear();
+        if (_scrollHandling) return;
+        _scrollHandling = true;
+        try
+        {
+            var atTop = await JS.InvokeAsync<bool>("isAtTop", _scrollContainer);
+            if (atTop == _isAtTop) return;
+            _isAtTop = atTop;
+            if (_isAtTop && _pendingMessages.Count > 0)
+            {
+                FlushPending();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        finally
+        {
+            _scrollHandling = false;
+        }
     }
+
+    private void FlushPending()
+    {
+        var batch = _pendingMessages.ToList();
+        _pendingMessages.Clear();
+        // Enqueued oldest-first; insert at 0 so newest lands at top
+        foreach (var msg in batch)
+            _messages.Insert(0, msg);
+        while (_messages.Count > MaxMessages)
+            _messages.RemoveAt(_messages.Count - 1);
+    }
+
+    private async Task FlushPendingAndScrollToTop()
+    {
+        FlushPending();
+        _isAtTop = true;
+        await JS.InvokeVoidAsync("scrollToTop", _scrollContainer);
+    }
+
+    private void ClearMessages() => _messages.Clear();
 
     public async ValueTask DisposeAsync()
     {

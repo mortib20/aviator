@@ -24,6 +24,8 @@ public class JaeroAcarsStrategy(ILogger<DumpVdl2AcarsStrategy> logger) : IJaeroP
         {
             Label = acars.GetProperty("label").GetString() ?? string.Empty,
             Registration = acars.GetProperty("reg").GetString() ?? string.Empty,
+            FlightNumber = acars.TryGetProperty("flight", out var flt) ? flt.GetString() ?? string.Empty : string.Empty,
+            MessageNumber = acars.TryGetProperty("msg_num", out var msgNum) ? msgNum.GetString() ?? string.Empty : string.Empty,
             Text = acars.GetProperty("msg_text").GetString() ?? string.Empty
         };
         

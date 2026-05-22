@@ -1,10 +1,11 @@
 using Aviator.Adsb.DependencyInjection;
+using Aviator.Airframe.Database;
 using Aviator.Airframe.DependencyInjection;
 using Aviator.Airframe.SignalR;
-using Aviator.Global.Extensions.TimeSeries;
 using Aviator.Main.Components;
 using Aviator.Main.Frontend;
 using Aviator.Network.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 
@@ -17,6 +18,8 @@ if (!Directory.Exists(logPath))
 
 Log.Logger = new LoggerConfiguration()
     //.MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .Enrich.WithDemystifiedStackTraces()
     .WriteTo.Console(outputTemplate: logFormat)
     .WriteTo.File(
@@ -43,17 +46,21 @@ try
     builder.Services.AddCors();
     builder.Services.AddSignalR();
     builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-    builder.Services.AddSingleton<PlanespottersService>();
     builder.Services.Configure<FrontendConfig>(builder.Configuration.GetSection("Frontend"));
 
-    builder.AddAviatorInfluxDb();
-    builder.AddQuestDb();
     builder.AddNetworkUtilities();
 
     builder.AddAirframeExtension();
     builder.AddAdsbService();
 
     var app = builder.Build();
+
+    var dbFactory = app.Services.GetService<IDbContextFactory<AviatorDbContext>>();
+    if (dbFactory is not null)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        await db.Database.EnsureCreatedAsync();
+    }
 
     app.UseCors(s =>
     {

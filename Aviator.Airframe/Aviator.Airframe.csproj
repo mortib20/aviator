@@ -12,16 +12,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="InfluxDB3.Client" />
-        <PackageReference Include="MongoDB.Driver" />
-        <PackageReference Include="net-questdb-client" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="SharpCompress" />
         <PackageReference Include="Snappier" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj"/>
-        <ProjectReference Include="..\Aviator.Network\Aviator.Network.csproj"/>
+        <ProjectReference Include="..\Aviator.Global\Aviator.Global.csproj" />
+        <ProjectReference Include="..\Aviator.Network\Aviator.Network.csproj" />
     </ItemGroup>
 </Project>

@@ -1,21 +1,19 @@
 using Aviator.Airframe.Config;
+using Aviator.Airframe.Database;
 using Aviator.Airframe.Frames;
 using Aviator.Airframe.Frames.Strategies;
 using Aviator.Airframe.Frames.Strategies.AeroL.Jaero.Protocol;
 using Aviator.Airframe.Frames.Strategies.Hfdl.DumpHfdl.Protocol;
 using Aviator.Airframe.Frames.Strategies.Vdl2.DumpVdl2.Protocol;
-using Aviator.Airframe.Metrics;
-using Aviator.Airframe.Metrics.Implementation;
 using Aviator.Airframe.Network;
 using Aviator.Airframe.Network.Implementation;
 using Aviator.Airframe.SignalR;
 using Aviator.Global.Extensions.Service;
-using Aviator.Global.TimeSeries;
 using Aviator.Network.Input;
 using Aviator.Network.Output;
-using InfluxDB3.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,15 +26,12 @@ public static class AirframeExtension
     {
         var acarsConfig = builder.Configuration.GetSection(AirframeConfig.Section).Get<AirframeConfig>();
         ArgumentNullException.ThrowIfNull(acarsConfig);
-        
-        // Inject input manager
+
         builder.Services.AddSingleton<IAirframeInputManager, AirframeInputManager>(sp =>
         {
             var inputBuilder = sp.GetRequiredService<InputBuilder>();
-            
             var logger = sp.GetRequiredService<ILogger<AirframeInputManager>>();
             var input = inputBuilder.Create(acarsConfig.Input);
-            
             return new AirframeInputManager(logger, input);
         });
 
@@ -45,53 +40,36 @@ public static class AirframeExtension
             var outputsDictionary = CreateOutputDictionary(sp, acarsConfig.Outputs);
             return new AirframeOutputManager(sp.GetRequiredService<ILogger<AirframeOutputManager>>(), outputsDictionary);
         });
-        
-        // Inject all decoder specific protocol strategies
+
         builder.Services.AddAllImplementations<IDumpVdl2ProtocolStrategy>(ServiceLifetime.Singleton);
         builder.Services.AddAllImplementations<IJaeroProtocolStrategy>(ServiceLifetime.Singleton);
         builder.Services.AddAllImplementations<IDumpHfdlProtocolStrategy>(ServiceLifetime.Singleton);
-        
-        // Inject all decoder strategies
         builder.Services.AddAllImplementations<IDecoderStrategy>(ServiceLifetime.Singleton);
 
         builder.Services.AddSingleton<AirframeHub>();
-        builder.Services.AddSingleton<AirframeMetrics>(sp =>
+
+        var dbConfig = builder.Configuration.GetSection(DatabaseConfig.Section).Get<DatabaseConfig>();
+        if (dbConfig is not null && !string.IsNullOrWhiteSpace(dbConfig.ConnectionString))
         {
-            var enabledMetrics = new List<IAirframeMetric>();
+            builder.Services.AddDbContextFactory<AviatorDbContext>(options =>
+                options.UseNpgsql(dbConfig.ConnectionString));
+        }
 
-            var influxDbClient = sp.GetService<InfluxDBClient>();
-            if (influxDbClient is not null)
-            {
-                enabledMetrics.Add(new InfluxDbAirframeMetric(sp.GetRequiredService<ILogger<InfluxDbAirframeMetric>>(), influxDbClient));
-            }
-
-            var questDbClient = sp.GetService<QuestDbClient>();
-            if (questDbClient is not null)
-            {
-                enabledMetrics.Add(new QuestDbAirframeMetric(sp.GetRequiredService<ILogger<QuestDbAirframeMetric>>(), questDbClient));
-            }
-
-            var metricsLogger = sp.GetRequiredService<ILogger<AirframeMetrics>>();
-            metricsLogger.LogInformation("Enabled Metrics: {EnabledMetrics}", string.Join(", ", enabledMetrics.Select(s => s.GetType().Name)));
-
-            return new AirframeMetrics(metricsLogger, enabledMetrics);
-        });
-        
         builder.Services.AddSingleton<AirframeHandler>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<AirframeHandler>>();
             var decoderStrategies = sp.GetRequiredService<List<IDecoderStrategy>>();
             var outputManager = sp.GetRequiredService<IAirframeOutputManager>();
-            var airframeMetrics = sp.GetRequiredService<AirframeMetrics>();
             var airframeHub = sp.GetRequiredService<IHubContext<AirframeHub>>();
-            return new AirframeHandler(logger, decoderStrategies, outputManager, airframeMetrics, airframeHub);
+            var dbContextFactory = sp.GetService<IDbContextFactory<AviatorDbContext>>();
+            return new AirframeHandler(logger, decoderStrategies, outputManager, airframeHub, dbContextFactory);
         });
-        
+
         builder.Services.AddHostedService<AirframeService>();
-        
+
         return builder;
     }
-    
+
     private static Dictionary<FrameType, List<IOutput>> CreateOutputDictionary(IServiceProvider s, List<OutputEndpointConfig> acarsConfig)
     {
         var outputBuilder = s.GetRequiredService<OutputBuilder>();
@@ -103,12 +81,11 @@ public static class AirframeExtension
         var outputDictionary = frameTypes
             .ToDictionary<FrameType, FrameType, List<IOutput>>(
                 frameType => frameType,
-                frameType => outputsTuple.Where(b => b.Types.Contains(frameType)).Select(o => o.Item2).ToList()
-                );
+                frameType => outputsTuple.Where(b => b.Types.Contains(frameType)).Select(o => o.Item2).ToList());
 
         var logger = s.GetRequiredService<ILogger<FrameType>>();
         using var scope = logger.BeginScope(nameof(AirframeHandler));
-        
+
         foreach (var (key, value) in outputDictionary)
         {
             if (value.Count == 0)
@@ -118,7 +95,7 @@ public static class AirframeExtension
             }
             logger.LogInformation("Sending {Type} to {Outputs}.", key, string.Join(", ", value.Select(output => output.EndPoint)));
         }
-        
+
         return outputDictionary;
     }
 }

@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgis/postgis:17-3.5-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aviator
+      POSTGRES_USER: aviator
+      POSTGRES_PASSWORD: aviator
+    ports:
+      - "5432:5432"
+    volumes:
+      - aviator_db:/var/lib/postgresql/data
+
+volumes:
+  aviator_db:

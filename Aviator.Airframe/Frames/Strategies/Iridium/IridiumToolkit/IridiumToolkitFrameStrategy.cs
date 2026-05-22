@@ -54,6 +54,8 @@ public class IridiumToolkitFrameStrategy(ILogger<IridiumToolkitFrameStrategy> lo
         {
             Label = acars.GetProperty("label").GetString() ?? "",
             Registration = acars.GetProperty("tail").GetString() ?? "",
+            FlightNumber = acars.TryGetProperty("flight", out var flt) ? flt.GetString() ?? "" : "",
+            MessageNumber = acars.TryGetProperty("msgno", out var msgno) ? msgno.GetString() ?? "" : "",
             Text = acars.GetProperty("text").GetString() ?? ""
         };
 

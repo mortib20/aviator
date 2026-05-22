@@ -1,14 +1,22 @@
-@inject PlanespottersService Planespotters
+@inject IJSRuntime JS
 
 <div class="card border-secondary-subtle acars-card">
     <div class="card-body p-3">
         <div class="d-flex gap-3">
 
-            @* Aircraft photo *@
+            @* Aircraft photo — loaded by the browser directly from Planespotters CDN *@
             <div class="acars-photo flex-shrink-0">
-                @if (_photoUrl is not null)
+                @if (_photo?.Url is not null)
                 {
-                    <img src="@_photoUrl" alt="@Registration" class="rounded" loading="lazy" />
+                    <a href="@_photo.Link" target="_blank" title="View on Planespotters.net">
+                        <img src="@_photo.Url" alt="@Registration" class="rounded" loading="lazy" />
+                    </a>
+                    @if (!string.IsNullOrEmpty(_photo.Photographer))
+                    {
+                        <div class="photo-credit text-truncate" title="© @_photo.Photographer">
+                            © @_photo.Photographer
+                        </div>
+                    }
                 }
                 else
                 {
@@ -87,7 +95,7 @@
 @code {
     [Parameter, EditorRequired] public required Airframe Message { get; set; }
 
-    private string? _photoUrl;
+    private PhotoData? _photo;
 
     private string Registration => GetProtocolString("registration");
     private string Label => GetProtocolString("label");
@@ -96,7 +104,6 @@
     private string GetProtocolString(string key)
     {
         if (Message.Protocol is not JsonElement el) return "";
-        // SignalR serializes with camelCase; try that first, then PascalCase
         if (el.TryGetProperty(key, out var prop)) return prop.GetString() ?? "";
         var pascal = $"{char.ToUpper(key[0])}{key[1..]}";
         if (el.TryGetProperty(pascal, out prop)) return prop.GetString() ?? "";
@@ -106,7 +113,21 @@
     protected override async Task OnParametersSetAsync()
     {
         var reg = Registration;
-        if (!string.IsNullOrEmpty(reg))
-            _photoUrl = await Planespotters.GetPhotoUrlAsync(reg);
+        if (string.IsNullOrEmpty(reg)) return;
+        try
+        {
+            _photo = await JS.InvokeAsync<PhotoData?>("fetchPlanespottersPhoto", reg);
+        }
+        catch
+        {
+            // JS not yet available during SSR prerender — photo stays null
+        }
+    }
+
+    private sealed class PhotoData
+    {
+        public string? Url { get; set; }
+        public string? Link { get; set; }
+        public string? Photographer { get; set; }
     }
 }

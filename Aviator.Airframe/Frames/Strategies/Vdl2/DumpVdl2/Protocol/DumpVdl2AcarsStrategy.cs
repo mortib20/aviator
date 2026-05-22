@@ -33,6 +33,8 @@ public class DumpVdl2AcarsStrategy(ILogger<DumpVdl2AcarsStrategy> logger) : IDum
         {
             Label = hasLabel ? label.GetString() ?? string.Empty : string.Empty,
             Registration = hasReg ? reg.GetString() ?? string.Empty : string.Empty,
+            FlightNumber = acars.TryGetProperty("flight", out var flt) ? flt.GetString() ?? string.Empty : string.Empty,
+            MessageNumber = acars.TryGetProperty("msg_num", out var msgNum) ? msgNum.GetString() ?? string.Empty : string.Empty,
             Text = hasMsgText ? msgText.GetString() ?? string.Empty : string.Empty
         };
         

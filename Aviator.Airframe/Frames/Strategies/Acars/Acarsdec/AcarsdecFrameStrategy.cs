@@ -50,6 +50,8 @@ public class AcarsdecFrameStrategy(ILogger<AcarsdecFrameStrategy> logger) : IDec
         {
             Label = rawAirframe.GetProperty("label").GetString() ?? "",
             Registration = rawAirframe.GetProperty("tail").GetString() ?? "",
+            FlightNumber = rawAirframe.TryGetProperty("flight", out var flt) ? flt.GetString() ?? "" : "",
+            MessageNumber = rawAirframe.TryGetProperty("msgno", out var msgno) ? msgno.GetString() ?? "" : "",
             Text = rawAirframe.GetProperty("text").GetString() ?? ""
         };
 

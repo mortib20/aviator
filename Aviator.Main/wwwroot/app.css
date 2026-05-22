@@ -41,6 +41,22 @@ html, body {
     color: #e6edf3;
 }
 
+/* Pending-messages banner */
+.pending-banner {
+    background-color: #1f6feb;
+    color: #fff;
+    text-align: center;
+    padding: 5px 12px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.pending-banner:hover {
+    background-color: #388bfd;
+}
+
 /* ACARS message card */
 .acars-card {
     background-color: #161b22;
@@ -62,6 +78,14 @@ html, body {
     width: 120px;
     height: 80px;
     object-fit: cover;
+}
+
+.photo-credit {
+    font-size: 0.6rem;
+    color: #8b949e;
+    text-align: center;
+    max-width: 120px;
+    margin-top: 2px;
 }
 
 .acars-photo-placeholder {
