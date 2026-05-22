@@ -1,4 +1,3 @@
-using Aviator.Adsb.DependencyInjection;
 using Aviator.Airframe.Database;
 using Aviator.Airframe.DependencyInjection;
 using Aviator.Airframe.SignalR;
@@ -51,7 +50,6 @@ try
     builder.AddNetworkUtilities();
 
     builder.AddAirframeExtension();
-    builder.AddAdsbService();
 
     var app = builder.Build();
 
