@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgis/postgis:17-3.5-alpine
+    image: imresamu/postgis:17-3.5
     restart: unless-stopped
     environment:
       POSTGRES_DB: aviator
