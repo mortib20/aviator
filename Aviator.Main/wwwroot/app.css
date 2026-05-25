@@ -32,8 +32,9 @@
 #components-reconnect-modal.components-reconnect-failed .reconnect-state-failed { display: block; }
 #components-reconnect-modal.components-reconnect-rejected .reconnect-state-rejected { display: block; }
 
-/* Bootstrap missing utility */
+/* Bootstrap missing utilities */
 .min-w-0 { min-width: 0; }
+.gap-px  { gap: 1px; }
 
 /* Base overrides for dark aviation theme */
 html, body {
@@ -93,6 +94,35 @@ html, body {
     height: 80px;
     background-color: #21262d;
     border: 1px dashed #30363d;
+}
+
+/* Mobile: reduce photo size on small phones */
+@media (max-width: 479px) {
+    .acars-photo,
+    .acars-photo img,
+    .acars-photo-placeholder {
+        width: 80px;
+        height: 54px;
+    }
+    .photo-credit {
+        max-width: 80px;
+    }
+}
+
+/* Very small screens: stack card content vertically */
+@media (max-width: 359px) {
+    .acars-card-content {
+        flex-wrap: wrap;
+    }
+    .acars-card-content .acars-photo,
+    .acars-card-content .acars-photo img,
+    .acars-card-content .acars-photo-placeholder {
+        width: 100%;
+        height: 90px;
+    }
+    .acars-card-content .photo-credit {
+        max-width: 100%;
+    }
 }
 
 /* Raw message text */
@@ -185,4 +215,47 @@ html, body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #58a6ff;
+}
+
+/* Spinning refresh icon */
+@keyframes spin {
+    from { transform: rotate(0deg);   }
+    to   { transform: rotate(360deg); }
+}
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+/* Stats page — progress bar fills matching frame badge colors */
+.frame-bar-vdl2    { background-color: #1f6feb; }
+.frame-bar-hfdl    { background-color: #388bfd; }
+.frame-bar-acars   { background-color: #2da44e; }
+.frame-bar-aerol   { background-color: #a371f7; }
+.frame-bar-iridium { background-color: #db6d28; }
+
+/* Stats summary cards */
+.stat-card {
+    background-color: #161b22;
+    border-color: #30363d !important;
+    transition: border-color 0.15s;
+}
+.stat-card:hover {
+    border-color: #58a6ff !important;
+}
+
+/* 24h activity bar chart */
+.activity-bar {
+    background-color: #1f6feb;
+    border-radius: 2px 2px 0 0;
+    opacity: 0.8;
+    min-height: 1px;
+    transition: opacity 0.15s;
+}
+.activity-bar:hover {
+    opacity: 1;
+}
+
+/* Mobile: make summary stat cards 2-per-row */
+@media (max-width: 575px) {
+    .stats-header-actions {
+        flex-wrap: nowrap;
+    }
 }

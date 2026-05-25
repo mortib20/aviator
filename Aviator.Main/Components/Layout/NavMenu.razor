@@ -1,15 +1,17 @@
 @inject IOptions<FrontendConfig> Config
+@inject NavigationManager Nav
+@implements IDisposable
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom border-secondary-subtle px-3">
     <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="/">
         <i class="bi bi-airplane-engines-fill text-primary"></i>
         Aviator
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" @onclick="ToggleMenu"
+            aria-controls="navbarContent" aria-expanded="@_expanded.ToString().ToLower()" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarContent">
+    <div class="navbar-collapse @(_expanded ? "show" : "collapse")" id="navbarContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
                 <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
@@ -19,6 +21,11 @@
             <li class="nav-item">
                 <NavLink class="nav-link" href="/acars">
                     <i class="bi bi-broadcast me-1"></i>ACARS
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/stats">
+                    <i class="bi bi-bar-chart-line me-1"></i>Stats
                 </NavLink>
             </li>
         </ul>
@@ -40,3 +47,22 @@
         }
     </div>
 </nav>
+
+@code {
+    private bool _expanded = false;
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void ToggleMenu() => _expanded = !_expanded;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _expanded = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}
