@@ -1,10 +1,12 @@
 using Aviator.Airframe.Database;
 using Aviator.Airframe.DependencyInjection;
 using Aviator.Airframe.SignalR;
+using Aviator.Main.Api;
 using Aviator.Main.Components;
 using Aviator.Main.Decoders;
 using Aviator.Main.Decoders.Metar;
 using Aviator.Main.Frontend;
+using Aviator.Main.Services;
 using Aviator.Network.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -52,6 +54,10 @@ try
     builder.Services.AddSingleton<IMessageDecoder, MetarDecoder>();
     builder.Services.AddSingleton<DecoderRegistry>();
 
+    builder.Services.AddHttpClient("airports");
+    builder.Services.AddSingleton<AirportDataService>();
+    builder.Services.AddTransient<MapQueryService>();
+
     builder.AddNetworkUtilities();
 
     builder.AddAirframeExtension();
@@ -78,6 +84,7 @@ try
     app.UseAntiforgery();
 
     app.MapHub<AirframeHub>("/hub/acars");
+    app.MapMapApi();
     app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
     await app.RunAsync().ConfigureAwait(false);

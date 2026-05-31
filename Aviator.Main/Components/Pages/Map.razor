@@ -1,0 +1,111 @@
+@page "/map"
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<PageTitle>Map — Aviator</PageTitle>
+
+<div class="d-flex flex-column h-100">
+
+    @* ── Header ──────────────────────────────────────────────── *@
+    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom border-secondary-subtle">
+        <h6 class="mb-0 fw-semibold me-1">Map</h6>
+
+        @foreach (var q in new[] { "1h", "12h", "1d" })
+        {
+            <button class="btn btn-sm py-0 @(_rangeInput == q ? "btn-primary" : "btn-outline-secondary")"
+                    @onclick="() => ApplyRangeAsync(q)">@q</button>
+        }
+
+        <input class="form-control form-control-sm map-range-input"
+               @bind="_rangeInput"
+               @bind:event="oninput"
+               @onkeyup="OnKeyUpAsync"
+               placeholder="e.g. 6h, 2d" />
+
+        <button class="btn btn-sm btn-outline-secondary py-0"
+                @onclick="ReloadAsync"
+                title="Reload"
+                disabled="@_loading">
+            <i class="bi bi-arrow-clockwise @(_loading ? "spin" : "")"></i>
+        </button>
+
+        @if (!string.IsNullOrEmpty(_status))
+        {
+            <span class="text-secondary small ms-1">@_status</span>
+        }
+    </div>
+
+    @* ── Map container ────────────────────────────────────────── *@
+    <div id="av-map" class="flex-grow-1 map-container"></div>
+
+</div>
+
+@code {
+    private string _rangeInput = "1h";
+    private string _status     = "";
+    private bool   _loading;
+    private bool   _initialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await JS.InvokeVoidAsync("AviatorMap.init", "av-map");
+        _initialized = true;
+        await ReloadAsync();
+    }
+
+    private async Task ApplyRangeAsync(string range)
+    {
+        _rangeInput = range;
+        await ReloadAsync();
+    }
+
+    private async Task OnKeyUpAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        if (!_initialized) return;
+
+        if (!TimeRange.TryParse(_rangeInput, out var span))
+        {
+            _status = "Invalid range";
+            StateHasChanged();
+            return;
+        }
+
+        _loading = true;
+        _status  = "Loading…";
+        StateHasChanged();
+
+        var to   = DateTimeOffset.UtcNow;
+        var from = to - span;
+
+        try
+        {
+            var result = await JS.InvokeAsync<LoadResult>(
+                "AviatorMap.loadData",
+                from.ToString("O"),
+                to.ToString("O"));
+
+            _status = result.AircraftCount == 0 && result.StationsCount == 0
+                ? "No data for this range"
+                : $"{result.AircraftCount} aircraft · {result.StationsCount} METAR stations";
+        }
+        catch
+        {
+            _status = "Load failed";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private sealed record LoadResult(int AircraftCount, int StationsCount);
+}
