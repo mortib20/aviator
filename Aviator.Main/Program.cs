@@ -2,6 +2,8 @@ using Aviator.Airframe.Database;
 using Aviator.Airframe.DependencyInjection;
 using Aviator.Airframe.SignalR;
 using Aviator.Main.Components;
+using Aviator.Main.Decoders;
+using Aviator.Main.Decoders.Metar;
 using Aviator.Main.Frontend;
 using Aviator.Network.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +48,9 @@ try
     builder.Services.AddSignalR();
     builder.Services.AddRazorComponents().AddInteractiveServerComponents();
     builder.Services.Configure<FrontendConfig>(builder.Configuration.GetSection("Frontend"));
+
+    builder.Services.AddSingleton<IMessageDecoder, MetarDecoder>();
+    builder.Services.AddSingleton<DecoderRegistry>();
 
     builder.AddNetworkUtilities();
 

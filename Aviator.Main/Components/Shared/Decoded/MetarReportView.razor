@@ -1,0 +1,218 @@
+@namespace Aviator.Main.Components.Shared.Decoded
+@using Aviator.Main.Decoders.Metar
+
+<div class="metar-panel">
+    @foreach (var report in Message.Reports)
+    {
+        <div class="metar-report">
+
+            @* ── Header: type badge + station + time ─────────────── *@
+            <div class="metar-header">
+                <span class="metar-type-badge @(report.IsSpeci ? "metar-speci" : "metar-regular")">
+                    @(report.IsSpeci ? "SPECI" : "METAR")
+                </span>
+                <span class="fw-semibold">@report.StationIcao</span>
+                @if (report.ObservationTime.HasValue)
+                {
+                    <span class="text-secondary small">
+                        @report.ObservationTime.Value.ToString("dd HH:mm") UTC
+                    </span>
+                }
+                @if (report.Cavok)
+                {
+                    <span class="badge bg-success ms-1" title="Ceiling and Visibility OK">CAVOK</span>
+                }
+            </div>
+
+            @* ── Main row: temp, wind, visibility ────────────────── *@
+            <div class="metar-body">
+                @if (report.Temperature.HasValue)
+                {
+                    <div class="metar-item" title="Temperature / Dew point">
+                        <i class="bi bi-thermometer-half me-1 text-secondary"></i>
+                        <span style="color: @TempColor(report.Temperature.Value)" class="fw-semibold">
+                            @FormatTemp(report.Temperature.Value)
+                        </span>
+                        @if (report.DewPoint.HasValue)
+                        {
+                            <span class="text-secondary"> / @FormatTemp(report.DewPoint.Value)</span>
+                        }
+                    </div>
+                }
+
+                @if (report.Wind is { } wind)
+                {
+                    <div class="metar-item" title="Wind">
+                        <i class="bi bi-wind me-1 text-secondary"></i>
+                        @if (wind.IsCalm)
+                        {
+                            <span class="text-secondary">Calm</span>
+                        }
+                        else if (wind.IsVariable)
+                        {
+                            <span>VRB @wind.SpeedKnots kt</span>
+                        }
+                        else
+                        {
+                            <span class="metar-wind-arrow me-1"
+                                  style="transform: rotate(@(wind.DirectionDegrees)deg)">↑</span>
+                            <span>@DegreesToCardinal(wind.DirectionDegrees!.Value)
+                                @wind.DirectionDegrees.Value°
+                                @wind.SpeedKnots kt</span>
+                            @if (wind.GustKnots.HasValue)
+                            {
+                                <span class="ms-1 text-warning">G@(wind.GustKnots.Value) kt</span>
+                            }
+                        }
+                    </div>
+                }
+
+                @if (report.VisibilityMeters.HasValue)
+                {
+                    <div class="metar-item" title="Visibility">
+                        <i class="bi bi-eye me-1 text-secondary"></i>
+                        <span style="color: @VisColor(report.VisibilityMeters.Value)">
+                            @FormatVis(report.VisibilityMeters.Value)
+                        </span>
+                    </div>
+                }
+
+                @if (report.Qnh.HasValue)
+                {
+                    <div class="metar-item" title="QNH pressure">
+                        <i class="bi bi-speedometer2 me-1 text-secondary"></i>
+                        <span>@report.Qnh.Value hPa</span>
+                    </div>
+                }
+            </div>
+
+            @* ── Present weather phenomena ────────────────────────── *@
+            @if (report.WeatherGroups.Count > 0)
+            {
+                <div class="metar-body">
+                    @foreach (var w in report.WeatherGroups)
+                    {
+                        <span class="metar-wx-badge" title="@WeatherDescription(w)">@w</span>
+                    }
+                </div>
+            }
+
+            @* ── Cloud layers ─────────────────────────────────────── *@
+            @if (report.Clouds.Count > 0)
+            {
+                <div class="metar-body">
+                    <i class="bi bi-cloud me-1 text-secondary"></i>
+                    @foreach (var c in report.Clouds)
+                    {
+                        <span class="metar-cloud metar-cloud-@c.Coverage.ToLower()" title="@CloudDescription(c)">
+                            @c.Coverage
+                            @if (c.AltitudeFt.HasValue)
+                            {<text> @c.AltitudeFt.Value ft</text>}
+                            @if (c.Type is not null)
+                            {<span class="text-warning ms-1">@c.Type</span>}
+                        </span>
+                    }
+                </div>
+            }
+
+            @* ── Trend ────────────────────────────────────────────── *@
+            @if (!string.IsNullOrEmpty(report.Trend))
+            {
+                <div class="metar-body">
+                    <i class="bi bi-arrow-repeat me-1 text-secondary"></i>
+                    <span class="text-secondary font-monospace" style="font-size:0.78rem">@report.Trend</span>
+                </div>
+            }
+
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required MetarDecodedMessage Message { get; set; }
+
+    private static string TempColor(double t) => t switch
+    {
+        < -10 => "#a5d8ff",
+        < 0   => "#74c0fc",
+        < 10  => "#a9e34b",
+        < 20  => "#51cf66",
+        < 30  => "#ffa94d",
+        _     => "#ff6b6b"
+    };
+
+    private static string VisColor(int m) => m switch
+    {
+        < 500  => "#ff6b6b",
+        < 1500 => "#ffa94d",
+        < 5000 => "#fcc419",
+        _      => "#8b949e"
+    };
+
+    private static string FormatTemp(double t) =>
+        $"{(t >= 0 ? "" : "")}{t:F0}°C";
+
+    private static string FormatVis(int meters)
+    {
+        if (meters >= 9999) return "10+ km";
+        if (meters >= 1000)
+        {
+            var km = meters / 1000.0;
+            return km == Math.Floor(km) ? $"{(int)km} km" : $"{km:F1} km";
+        }
+        return $"{meters} m";
+    }
+
+    private static string DegreesToCardinal(int deg)
+    {
+        ReadOnlySpan<string> dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                                     "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return dirs[(int)Math.Round(deg / 22.5) % 16];
+    }
+
+    private static string CloudDescription(MetarCloud c) => c.Coverage switch
+    {
+        "SKC" or "CLR" => "Sky Clear",
+        "NCD"          => "No Clouds Detected",
+        "NSC"          => "No Significant Clouds",
+        "FEW"          => $"Few clouds at {c.AltitudeFt} ft (1–2 oktas)",
+        "SCT"          => $"Scattered clouds at {c.AltitudeFt} ft (3–4 oktas)",
+        "BKN"          => $"Broken clouds at {c.AltitudeFt} ft (5–7 oktas)",
+        "OVC"          => $"Overcast at {c.AltitudeFt} ft (8 oktas)",
+        _              => c.Coverage
+    };
+
+    private static string WeatherDescription(string code) => code switch
+    {
+        "+RA"  => "Heavy Rain",
+        "-RA"  => "Light Rain",
+        "RA"   => "Rain",
+        "+SN"  => "Heavy Snow",
+        "-SN"  => "Light Snow",
+        "SN"   => "Snow",
+        "TSRA" => "Thunderstorm with Rain",
+        "TS"   => "Thunderstorm",
+        "+TS"  => "Heavy Thunderstorm",
+        "FG"   => "Fog",
+        "BR"   => "Mist",
+        "HZ"   => "Haze",
+        "FU"   => "Smoke",
+        "DZ"   => "Drizzle",
+        "-DZ"  => "Light Drizzle",
+        "FZRA" => "Freezing Rain",
+        "FZDZ" => "Freezing Drizzle",
+        "BLSN" => "Blowing Snow",
+        "DRSN" => "Drifting Snow",
+        "RASN" => "Rain and Snow",
+        "PL"   => "Ice Pellets",
+        "GR"   => "Hail",
+        "GS"   => "Small Hail",
+        "MIFG" => "Shallow Fog",
+        "BCFG" => "Patchy Fog",
+        "PRFG" => "Partial Fog",
+        "VCTS" => "Thunderstorm in vicinity",
+        "VCFG" => "Fog in vicinity",
+        "VCSH" => "Shower in vicinity",
+        _      => code
+    };
+}
