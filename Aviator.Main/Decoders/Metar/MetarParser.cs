@@ -8,8 +8,8 @@ public static partial class MetarParser
     [GeneratedRegex(@"(?:METAR|SPECI)\b[^=]+=", RegexOptions.Singleline | RegexOptions.IgnoreCase)]
     private static partial Regex MetarTerminatedRegex();
 
-    // Fallback: single-line METAR without terminator
-    [GeneratedRegex(@"(?:METAR|SPECI)\s+[A-Z]{4}\s+\d{6}Z.*", RegexOptions.IgnoreCase)]
+    // Single-line METAR without terminator
+    [GeneratedRegex(@"(?:METAR|SPECI)\s+[A-Z]{4}\s+\d{6}Z[^\r\n]*", RegexOptions.IgnoreCase)]
     private static partial Regex MetarLineRegex();
 
     [GeneratedRegex(@"^(?<dir>(?:\d{3}|VRB))(?<speed>\d{2,3})(?:G(?<gust>\d{2,3}))?(?<unit>KT|MPS|KMH)$", RegexOptions.IgnoreCase)]
@@ -24,7 +24,8 @@ public static partial class MetarParser
     [GeneratedRegex(@"^(?:M?\d{1,2}|\/\/)\/(?:M?\d{1,2}|\/\/)$")]
     private static partial Regex TempDewRegex();
 
-    [GeneratedRegex(@"^(?<cov>FEW|SCT|BKN|OVC|VV)(?<alt>\d{3})(?<type>CB|TCU)?$", RegexOptions.IgnoreCase)]
+    // Cloud groups — allow trailing /// (automated stations: cloud type not observed)
+    [GeneratedRegex(@"^(?<cov>FEW|SCT|BKN|OVC|VV)(?<alt>\d{3})(?:(?<type>CB|TCU)|///)?$", RegexOptions.IgnoreCase)]
     private static partial Regex CloudRegex();
 
     // Present weather: optional intensity (+/-/VC), optional descriptor, one or more phenomena
@@ -38,31 +39,28 @@ public static partial class MetarParser
     public static List<MetarReport> ExtractAndParse(string text)
     {
         var reports = new List<MetarReport>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Keyed by station ICAO so we keep only the first (or best) parse per station
+        var seenRaw  = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenIcao = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        void TryAdd(string raw)
+        {
+            raw = NormalizeWhitespace(raw);
+            if (!seenRaw.Add(raw)) return;
+            var report = ParseSingle(raw);
+            if (report is null || string.IsNullOrEmpty(report.StationIcao)) return;
+            // Keep latest (first seen wins since messages are ordered by timestamp in the caller)
+            if (seenIcao.Add(report.StationIcao))
+                reports.Add(report);
+        }
+
+        // Pass 1: terminated blocks (= suffix) — handles multi-line METARs
         foreach (Match m in MetarTerminatedRegex().Matches(text))
-        {
-            var raw = NormalizeWhitespace(m.Value);
-            if (seen.Add(raw))
-            {
-                var report = ParseSingle(raw);
-                if (report != null) reports.Add(report);
-            }
-        }
+            TryAdd(m.Value);
 
-        // If no terminated blocks found, try per-line
-        if (reports.Count == 0)
-        {
-            foreach (Match m in MetarLineRegex().Matches(text))
-            {
-                var raw = NormalizeWhitespace(m.Value);
-                if (seen.Add(raw))
-                {
-                    var report = ParseSingle(raw);
-                    if (report != null) reports.Add(report);
-                }
-            }
-        }
+        // Pass 2: line-by-line — catches non-terminated METARs and those missed by pass 1
+        foreach (Match m in MetarLineRegex().Matches(text))
+            TryAdd(m.Value);
 
         return reports;
     }
