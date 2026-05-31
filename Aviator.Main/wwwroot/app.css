@@ -151,7 +151,7 @@ html, body {
 }
 
 .frame-badge-hfdl {
-    background-color: #388bfd;
+    background-color: #e67700;
     color: #fff;
     font-size: 0.7rem;
     padding: 2px 7px;
@@ -226,7 +226,7 @@ html, body {
 
 /* Stats page — progress bar fills matching frame badge colors */
 .frame-bar-vdl2    { background-color: #1f6feb; }
-.frame-bar-hfdl    { background-color: #388bfd; }
+.frame-bar-hfdl    { background-color: #e67700; }
 .frame-bar-acars   { background-color: #2da44e; }
 .frame-bar-aerol   { background-color: #a371f7; }
 .frame-bar-iridium { background-color: #db6d28; }

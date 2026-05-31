@@ -11,6 +11,7 @@ public sealed record TrackPoint(double Lat, double Lon, int? AltFt, DateTimeOffs
 public sealed record AircraftDto(
     string Icao,
     string? Registration,
+    string FrameType,
     double LastLat,
     double LastLon,
     int? LastAltFt,
@@ -71,6 +72,7 @@ public sealed class MapQueryService(
             {
                 a.Icao,
                 a.AcarsRegistration,
+                a.FrameType,
                 a.Latitude,
                 a.Longitude,
                 a.Altitude,
@@ -96,6 +98,7 @@ public sealed class MapQueryService(
             result.Add(new AircraftDto(
                 Icao:         group.Key,
                 Registration: last.AcarsRegistration,
+                FrameType:    last.FrameType ?? "",
                 LastLat:      (double)last.Latitude!.Value,
                 LastLon:      (double)last.Longitude!.Value,
                 LastAltFt:    last.Altitude.HasValue ? (int)last.Altitude.Value : null,
