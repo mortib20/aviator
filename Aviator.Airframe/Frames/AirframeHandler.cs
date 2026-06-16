@@ -46,7 +46,7 @@ public class AirframeHandler(
             await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL or FrameType.Acars or FrameType.Hfdl, ProtocolType: ProtocolType.Acars, Protocol: not null })
+        if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL or FrameType.Acars or FrameType.Hfdl or FrameType.Iridium, ProtocolType: ProtocolType.Acars, Protocol: not null })
         {
             await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
         }
