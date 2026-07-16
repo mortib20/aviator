@@ -61,7 +61,7 @@
             <div class="d-flex flex-column gap-2">
                 @foreach (var msg in _messages)
                 {
-                    <AcarsCard Message="msg" />
+                    <AcarsCard @key="msg" Message="msg" />
                 }
             </div>
         }
@@ -84,8 +84,11 @@
     private bool _scrollHandling;
     private ElementReference _scrollContainer;
 
-    protected override async Task OnInitializedAsync()
+    // Hub is started in OnAfterRenderAsync so no connection is opened during prerender
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender) return;
+
         _hub = new HubConnectionBuilder()
             .WithUrl(Nav.ToAbsoluteUri("/hub/acars"))
             .WithAutomaticReconnect()
@@ -96,7 +99,9 @@
             })
             .Build();
 
-        _hub.On<Airframe>("Acars", async frame =>
+        // Handler runs on a SignalR thread — marshal onto the renderer's sync
+        // context before touching component state
+        _hub.On<Airframe>("Acars", frame => InvokeAsync(() =>
         {
             // Always increment running total for this frame type
             var key = frame.FrameType.ToString();
@@ -113,14 +118,16 @@
                 _pendingMessages.Enqueue(frame);
             }
 
-            await InvokeAsync(StateHasChanged);
-        });
+            StateHasChanged();
+        }));
 
         _hub.Reconnecting += _ => { _connected = false; return InvokeAsync(StateHasChanged); };
         _hub.Reconnected  += _ => { _connected = true;  return InvokeAsync(StateHasChanged); };
+        _hub.Closed       += _ => { _connected = false; return InvokeAsync(StateHasChanged); };
 
         await _hub.StartAsync();
         _connected = true;
+        StateHasChanged();
     }
 
     // Debounced via _scrollHandling flag — only one in-flight JS call at a time
@@ -163,7 +170,11 @@
         await JS.InvokeVoidAsync("scrollToTop", _scrollContainer);
     }
 
-    private void ClearMessages() => _messages.Clear();
+    private void ClearMessages()
+    {
+        _messages.Clear();
+        _pendingMessages.Clear();
+    }
 
     public async ValueTask DisposeAsync()
     {

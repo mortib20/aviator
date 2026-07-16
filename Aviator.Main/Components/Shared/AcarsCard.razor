@@ -1,3 +1,4 @@
+@using System.Globalization
 @inject IJSRuntime JS
 @inject DecoderRegistry DecoderRegistry
 
@@ -69,9 +70,9 @@
                     <div class="d-flex align-items-center gap-2 mt-1">
                         <i class="bi bi-geo-alt text-info small"></i>
                         <a class="text-info small text-decoration-none"
-                           href="https://www.openstreetmap.org/?mlat=@Message.Position.Latitude&mlon=@Message.Position.Longitude#map=9/@Message.Position.Latitude/@Message.Position.Longitude"
+                           href="@OsmUrl(Message.Position)"
                            target="_blank" rel="noopener noreferrer">
-                            @Message.Position.Latitude.ToString("F4")°, @Message.Position.Longitude.ToString("F4")°
+                            @Message.Position.Latitude.ToString("F4", CultureInfo.InvariantCulture)°, @Message.Position.Longitude.ToString("F4", CultureInfo.InvariantCulture)°
                         </a>
                         @if (Message.Position.Altitude > 0)
                         {
@@ -111,19 +112,27 @@
 
     private string GetProtocolString(string key)
     {
-        if (Message.Protocol is not JsonElement el) return "";
-        if (el.TryGetProperty(key, out var prop)) return prop.GetString() ?? "";
+        if (Message.Protocol is not JsonElement { ValueKind: JsonValueKind.Object } el) return "";
+        if (el.TryGetProperty(key, out var prop) && prop.ValueKind == JsonValueKind.String)
+            return prop.GetString() ?? "";
         var pascal = $"{char.ToUpper(key[0])}{key[1..]}";
-        if (el.TryGetProperty(pascal, out prop)) return prop.GetString() ?? "";
+        if (el.TryGetProperty(pascal, out prop) && prop.ValueKind == JsonValueKind.String)
+            return prop.GetString() ?? "";
         return "";
     }
+
+    private static string OsmUrl(Position p) => FormattableString.Invariant(
+        $"https://www.openstreetmap.org/?mlat={p.Latitude}&mlon={p.Longitude}#map=9/{p.Latitude}/{p.Longitude}");
+
+    private string? _photoReg;
 
     protected override async Task OnParametersSetAsync()
     {
         _decoded = DecoderRegistry.TryDecode(Label, Text);
 
         var reg = Registration;
-        if (string.IsNullOrEmpty(reg)) return;
+        if (string.IsNullOrEmpty(reg) || reg == _photoReg) return;
+        _photoReg = reg;
         try
         {
             _photo = await JS.InvokeAsync<PhotoData?>("fetchPlanespottersPhoto", reg);

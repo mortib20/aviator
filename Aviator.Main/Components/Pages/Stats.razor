@@ -245,7 +245,7 @@
         await RefreshAsync();
 
         _refreshTimer = new System.Timers.Timer(TimeSpan.FromSeconds(30));
-        _refreshTimer.Elapsed += async (_, _) => await InvokeAsync(RefreshAsync);
+        _refreshTimer.Elapsed += (_, _) => _ = InvokeAsync(RefreshAsync);
         _refreshTimer.AutoReset = true;
         _refreshTimer.Start();
     }
@@ -255,6 +255,24 @@
         _loading = true;
         StateHasChanged();
 
+        try
+        {
+            await LoadStatsAsync();
+            _lastUpdated = DateTimeOffset.UtcNow;
+        }
+        catch
+        {
+            // DB temporarily unavailable — keep last data, next refresh retries
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadStatsAsync()
+    {
         await using var db = await DbFactory.CreateDbContextAsync();
 
         var now = DateTimeOffset.UtcNow;
@@ -329,10 +347,6 @@
             _minSignalLevel = await withSignal.MinAsync(x => x.SignalLevel!.Value);
             _maxSignalLevel = await withSignal.MaxAsync(x => x.SignalLevel!.Value);
         }
-
-        _loading     = false;
-        _lastUpdated = now;
-        StateHasChanged();
     }
 
     public ValueTask DisposeAsync()

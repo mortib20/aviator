@@ -54,8 +54,9 @@
                         }
                         else
                         {
+                            @* Wind direction is where the wind comes FROM — arrow shows flow, so +180° *@
                             <span class="metar-wind-arrow me-1"
-                                  style="transform: rotate(@(wind.DirectionDegrees)deg)">↑</span>
+                                  style="transform: rotate(@((wind.DirectionDegrees!.Value + 180) % 360)deg)">↑</span>
                             <span>@DegreesToCardinal(wind.DirectionDegrees!.Value)
                                 @wind.DirectionDegrees.Value°
                                 @wind.SpeedKnots kt</span>
@@ -131,26 +132,28 @@
 @code {
     [Parameter, EditorRequired] public required MetarDecodedMessage Message { get; set; }
 
-    private static string TempColor(double t) => t switch
+    // Plain if-chains: the Razor parser chokes on relational patterns
+    // ("< -10 =>") at the start of a line inside switch expressions
+    private static string TempColor(double t)
     {
-        < -10 => "#a5d8ff",
-        < 0   => "#74c0fc",
-        < 10  => "#a9e34b",
-        < 20  => "#51cf66",
-        < 30  => "#ffa94d",
-        _     => "#ff6b6b"
-    };
+        if (t < -10) return "#a5d8ff";
+        if (t < 0)   return "#74c0fc";
+        if (t < 10)  return "#a9e34b";
+        if (t < 20)  return "#51cf66";
+        if (t < 30)  return "#ffa94d";
+        return "#ff6b6b";
+    }
 
-    private static string VisColor(int m) => m switch
+    private static string VisColor(int m)
     {
-        < 500  => "#ff6b6b",
-        < 1500 => "#ffa94d",
-        < 5000 => "#fcc419",
-        _      => "#8b949e"
-    };
+        if (m < 500)  return "#ff6b6b";
+        if (m < 1500) return "#ffa94d";
+        if (m < 5000) return "#fcc419";
+        return "#8b949e";
+    }
 
     private static string FormatTemp(double t) =>
-        $"{(t >= 0 ? "" : "")}{t:F0}°C";
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{t:F0}°C");
 
     private static string FormatVis(int meters)
     {

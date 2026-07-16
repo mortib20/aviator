@@ -105,7 +105,18 @@
         }
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public async ValueTask DisposeAsync()
+    {
+        if (!_initialized) return;
+        try
+        {
+            await JS.InvokeVoidAsync("AviatorMap.destroy");
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit already gone — nothing to clean up in the browser
+        }
+    }
 
     private sealed record LoadResult(int AircraftCount, int StationsCount);
 }

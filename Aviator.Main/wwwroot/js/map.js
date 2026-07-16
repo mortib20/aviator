@@ -68,8 +68,9 @@ const AviatorMap = (() => {
                 stationsCount: (data.metarStations || []).length
             };
         } catch (err) {
+            // Rethrow so the Blazor side can show "Load failed" instead of "No data"
             console.error('[AviatorMap]', err);
-            return { aircraftCount: 0, stationsCount: 0 };
+            throw err;
         }
     }
 
@@ -234,7 +235,14 @@ const AviatorMap = (() => {
         return dirs[Math.round(deg / 22.5) % 16];
     }
 
-    return { init, loadData };
+    function destroy() {
+        clearTracks();
+        if (_map) { _map.remove(); _map = null; }
+        _aircraftLayer = null;
+        _metarLayer = null;
+    }
+
+    return { init, loadData, destroy };
 })();
 
 window.AviatorMap = AviatorMap;
