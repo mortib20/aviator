@@ -1,0 +1,35 @@
+@namespace Aviator.Main.Components.Shared.Decoded
+@using Aviator.Main.Decoders.MediaAdvisory
+
+<div class="decoded-panel">
+    <div class="decoded-header">
+        <span class="decoded-type-badge decoded-media">MEDIA</span>
+        <span class="@(Message.LinkEstablished ? "text-success" : "text-warning")">
+            <i class="bi @(Message.LinkEstablished ? "bi-link-45deg" : "bi-link-45deg") me-1"></i>
+            @Message.Medium link @(Message.LinkEstablished ? "established" : "lost")
+        </span>
+        <span class="text-secondary small">@Message.Time z</span>
+    </div>
+
+    @if (Message.AvailableMedia.Count > 0)
+    {
+        <div class="metar-body">
+            <span class="text-secondary small">Available:</span>
+            @foreach (var medium in Message.AvailableMedia)
+            {
+                <span class="media-badge">@medium</span>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Message.FreeText))
+    {
+        <div class="metar-body">
+            <span class="text-secondary font-monospace" style="font-size:.78rem">@Message.FreeText</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required MediaAdvisoryDecodedMessage Message { get; set; }
+}

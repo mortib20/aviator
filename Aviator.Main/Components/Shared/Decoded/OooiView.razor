@@ -1,0 +1,42 @@
+@namespace Aviator.Main.Components.Shared.Decoded
+@using Aviator.Main.Decoders.Oooi
+
+<div class="decoded-panel">
+    <div class="decoded-header">
+        <span class="decoded-type-badge decoded-oooi">OOOI</span>
+        @if (!string.IsNullOrEmpty(Message.LabelMeaning))
+        {
+            <span class="text-secondary small">@Message.LabelMeaning</span>
+        }
+    </div>
+
+    @if (Message.Events.Count > 0)
+    {
+        <div class="oooi-timeline">
+            @foreach (var phase in Phases)
+            {
+                var evt = Message.Events.FirstOrDefault(e => e.Phase == phase.Code);
+                <div class="oooi-phase @(evt is not null ? "oooi-phase-active" : "")" title="@phase.Description">
+                    <i class="bi @phase.Icon"></i>
+                    <span class="oooi-phase-label">@phase.Code</span>
+                    @if (evt?.Time is not null)
+                    {
+                        <span class="oooi-phase-time">@evt.Time z</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required OooiDecodedMessage Message { get; set; }
+
+    private static readonly (string Code, string Icon, string Description)[] Phases =
+    [
+        ("OUT", "bi-box-arrow-right",   "Out of the gate (pushback)"),
+        ("OFF", "bi-airplane-fill",     "Off the ground (takeoff)"),
+        ("ON",  "bi-arrow-down-circle", "On the ground (landing)"),
+        ("IN",  "bi-door-closed",       "In the gate (arrival)"),
+    ];
+}

@@ -242,7 +242,57 @@ const AviatorMap = (() => {
         _metarLayer = null;
     }
 
-    return { init, loadData, destroy };
+    // ── Single-aircraft track map (detail page) ───────────────────────────────
+
+    let _detailMap = null;
+
+    function osmLayer() {
+        return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19
+        });
+    }
+
+    function trackPointTooltip(p) {
+        const alt = p.altFt != null ? `${p.altFt.toLocaleString()} ft<br>` : '';
+        const ts  = new Date(p.ts).toUTCString().replace(' GMT', ' UTC');
+        return `${alt}<span style="opacity:.6;font-size:.8em">${ts}</span>`;
+    }
+
+    function showTrack(elementId, points, frameType) {
+        destroyTrack();
+        if (!points || points.length === 0) return;
+
+        _detailMap = L.map(elementId, { preferCanvas: true });
+        osmLayer().addTo(_detailMap);
+
+        const color   = frameColor(frameType);
+        const latlngs = points.map(p => [p.lat, p.lon]);
+
+        if (points.length >= 2) {
+            L.polyline(latlngs, { color, weight: 2, opacity: 0.8, dashArray: '5 4' }).addTo(_detailMap);
+            points.slice(0, -1).forEach(p =>
+                L.circleMarker([p.lat, p.lon], { radius: 3, stroke: false, fillColor: color, fillOpacity: 0.85 })
+                    .bindTooltip(trackPointTooltip(p), { className: 'av-tooltip' })
+                    .addTo(_detailMap));
+        }
+
+        const last = points[points.length - 1];
+        L.marker([last.lat, last.lon], { icon: aircraftIcon(computeHeading(points), color) })
+            .bindTooltip(trackPointTooltip(last), { direction: 'top', offset: [0, -12], className: 'av-tooltip' })
+            .addTo(_detailMap);
+
+        if (points.length === 1) _detailMap.setView(latlngs[0], 8);
+        else _detailMap.fitBounds(latlngs, { padding: [30, 30], maxZoom: 10 });
+
+        setTimeout(() => _detailMap && _detailMap.invalidateSize(), 150);
+    }
+
+    function destroyTrack() {
+        if (_detailMap) { _detailMap.remove(); _detailMap = null; }
+    }
+
+    return { init, loadData, destroy, showTrack, destroyTrack };
 })();
 
 window.AviatorMap = AviatorMap;

@@ -35,7 +35,8 @@
 
                     @if (!string.IsNullOrEmpty(Registration))
                     {
-                        <span class="fw-semibold">@Registration</span>
+                        <a class="fw-semibold text-decoration-none reg-link"
+                           href="/aircraft/@Uri.EscapeDataString(Registration)">@Registration</a>
                     }
                     @if (!string.IsNullOrEmpty(Message.Icao) && Message.Icao != "0")
                     {
@@ -43,7 +44,7 @@
                     }
                     @if (!string.IsNullOrEmpty(Label))
                     {
-                        <span class="badge bg-secondary">@Label</span>
+                        <span class="badge bg-secondary" title="@(AcarsLabels.Describe(Label) ?? "Unknown label")">@Label</span>
                     }
                     @if (!string.IsNullOrEmpty(Message.Channel))
                     {
@@ -60,9 +61,9 @@
                 }
 
                 @* Decoded message panel *@
-                @if (_decoded is MetarDecodedMessage metarMsg && metarMsg.Reports.Count > 0)
+                @if (_decoded is not null)
                 {
-                    <MetarReportView Message="metarMsg" />
+                    <DecodedMessageView Message="_decoded" />
                 }
 
                 @if (Message.Position is not null)

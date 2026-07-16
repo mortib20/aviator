@@ -1,0 +1,22 @@
+@namespace Aviator.Main.Components.Shared.Decoded
+@using Aviator.Main.Decoders
+@using Aviator.Main.Decoders.MediaAdvisory
+@using Aviator.Main.Decoders.Metar
+@using Aviator.Main.Decoders.Oooi
+
+@switch (Message)
+{
+    case MetarDecodedMessage { Reports.Count: > 0 } metar:
+        <MetarReportView Message="metar" />
+        break;
+    case OooiDecodedMessage oooi when oooi.Events.Count > 0 || oooi.LabelMeaning is not null:
+        <OooiView Message="oooi" />
+        break;
+    case MediaAdvisoryDecodedMessage media:
+        <MediaAdvisoryView Message="media" />
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public required IDecodedMessage Message { get; set; }
+}

@@ -4,7 +4,9 @@ using Aviator.Airframe.SignalR;
 using Aviator.Main.Api;
 using Aviator.Main.Components;
 using Aviator.Main.Decoders;
+using Aviator.Main.Decoders.MediaAdvisory;
 using Aviator.Main.Decoders.Metar;
+using Aviator.Main.Decoders.Oooi;
 using Aviator.Main.Frontend;
 using Aviator.Main.Services;
 using Aviator.Network.DependencyInjection;
@@ -52,6 +54,8 @@ try
     builder.Services.Configure<FrontendConfig>(builder.Configuration.GetSection("Frontend"));
 
     builder.Services.AddSingleton<IMessageDecoder, MetarDecoder>();
+    builder.Services.AddSingleton<IMessageDecoder, MediaAdvisoryDecoder>();
+    builder.Services.AddSingleton<IMessageDecoder, OooiDecoder>();
     builder.Services.AddSingleton<DecoderRegistry>();
 
     builder.Services.AddHttpClient("airports");
