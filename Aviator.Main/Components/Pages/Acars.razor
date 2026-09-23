@@ -1,113 +1,134 @@
 @page "/acars"
-@implements IAsyncDisposable
-@inject NavigationManager Nav
+@implements IDisposable
+@inject AirframeFeed Feed
 @inject IJSRuntime JS
 
 <PageTitle>ACARS — Aviator</PageTitle>
 
+@{ var visible = _messages.Where(Matches).ToList(); }
+
 <div class="d-flex flex-column h-100">
 
     @* ── Header ──────────────────────────────────────────────── *@
-    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom border-secondary-subtle">
+    <div class="page-toolbar">
         <h6 class="mb-0 fw-semibold me-1">ACARS</h6>
-        <span class="badge rounded-pill @(_connected ? "bg-success" : "bg-danger")">
-            <i class="bi @(_connected ? "bi-circle-fill" : "bi-circle") me-1" style="font-size:.55rem"></i>
-            @(_connected ? "Live" : "Disconnected")
+        <span class="badge rounded-pill @(_paused ? "bg-warning text-dark" : _subscribed ? "bg-success" : "bg-secondary")">
+            <i class="bi @(_paused ? "bi-pause-fill" : "bi-circle-fill live-dot") me-1"></i>
+            @(_paused ? "Paused" : _subscribed ? "Live" : "Starting…")
         </span>
 
-        @foreach (var kvp in _totalCounts.OrderByDescending(x => x.Value))
+        @* Frame-type chips double as filters — click to hide/show a type *@
+        @foreach (var (type, count) in _totalCounts.OrderByDescending(x => x.Value))
         {
-            <span class="frame-badge-@kvp.Key.ToLower()">@kvp.Key @kvp.Value</span>
+            var hidden = _hiddenTypes.Contains(type);
+            <button type="button"
+                    class="frame-chip frame-badge-@type.ToString().ToLowerInvariant() @(hidden ? "is-off" : "")"
+                    aria-pressed="@((!hidden).ToString().ToLowerInvariant())"
+                    title="@(hidden ? "Show" : "Hide") @type"
+                    @onclick="() => ToggleType(type)">
+                @type <span class="opacity-75">@count.ToString("N0")</span>
+            </button>
         }
 
-        <div class="ms-auto d-flex align-items-center gap-2">
-            <span class="text-secondary small">@_messages.Count / @MaxMessages</span>
-            @if (_messages.Count > 0)
-            {
-                <button class="btn btn-sm btn-outline-secondary py-0" @onclick="ClearMessages" title="Clear messages">
-                    <i class="bi bi-trash"></i>
-                </button>
-            }
+        <div class="ms-auto d-flex align-items-center gap-2 toolbar-end">
+            <div class="input-group input-group-sm toolbar-search">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" placeholder="Reg, flight, label, text…"
+                       aria-label="Filter messages"
+                       @bind="_search" @bind:event="oninput" />
+            </div>
+            <span class="text-secondary small text-nowrap" title="Shown / buffered">
+                @visible.Count / @_messages.Count
+            </span>
+            <button class="btn btn-sm btn-outline-secondary py-0" @onclick="TogglePause"
+                    title="@(_paused ? "Resume" : "Pause") live feed">
+                <i class="bi @(_paused ? "bi-play-fill" : "bi-pause-fill")"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary py-0" @onclick="ClearMessages"
+                    title="Clear messages" disabled="@(_messages.Count == 0)">
+                <i class="bi bi-trash"></i>
+            </button>
         </div>
     </div>
 
     @* ── Pending banner ───────────────────────────────────────── *@
     @if (_pendingMessages.Count > 0)
     {
-        <div class="pending-banner" @onclick="FlushPendingAndScrollToTop">
+        <button type="button" class="pending-banner" @onclick="FlushPendingAndScrollToTop">
             <i class="bi bi-arrow-up-circle me-1"></i>
             @_pendingMessages.Count new message@(_pendingMessages.Count == 1 ? "" : "s") — click to show
-        </div>
+        </button>
     }
 
     @* ── Message list ─────────────────────────────────────────── *@
     <div class="flex-grow-1 overflow-auto p-3" @ref="_scrollContainer" @onscroll="HandleScroll">
-        @if (!_connected && _messages.Count == 0)
+        @if (_messages.Count == 0)
         {
-            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
-                <i class="bi bi-wifi-off display-4 mb-3 opacity-50"></i>
-                <p class="mb-0">Connecting to hub…</p>
-            </div>
-        }
-        else if (_messages.Count == 0)
-        {
-            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+            <div class="empty-state">
                 <i class="bi bi-reception-4 display-4 mb-3 text-success opacity-50"></i>
-                <p class="mb-0">Connected — waiting for messages…</p>
+                <p class="mb-0">Waiting for messages…</p>
             </div>
         }
         else
         {
             <div class="d-flex flex-column gap-2">
-                @foreach (var msg in _messages)
+                @foreach (var msg in visible)
                 {
                     <AcarsCard @key="msg" Message="msg" />
                 }
             </div>
+            @if (visible.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="bi bi-funnel display-4 mb-3 opacity-50"></i>
+                    <p class="mb-2">No buffered message matches the filter.</p>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="ResetFilter">Reset filter</button>
+                </div>
+            }
         }
     </div>
 
 </div>
 
 @code {
-    private HubConnection? _hub;
-    private bool _connected;
+    private bool _subscribed;
+    private bool _disposed;
+    private bool _paused;
 
     private readonly List<Airframe> _messages = [];
     private readonly Queue<Airframe> _pendingMessages = new();
-    private readonly Dictionary<string, int> _totalCounts = [];
+    private readonly Dictionary<FrameType, int> _totalCounts = [];
+    private readonly HashSet<FrameType> _hiddenTypes = [];
+    private string _search = "";
 
     private const int MaxMessages = 200;
     private const int MaxPending  = 500;
+    // Coalesce renders when frames arrive in bursts
+    private static readonly TimeSpan RenderInterval = TimeSpan.FromMilliseconds(250);
+    private bool _renderScheduled;
 
     private bool _isAtTop = true;
     private bool _scrollHandling;
     private ElementReference _scrollContainer;
 
-    // Hub is started in OnAfterRenderAsync so no connection is opened during prerender
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    // Subscribe only once interactive — a prerender pass would otherwise receive frames too
+    protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
+        Feed.Received += OnFrame;
+        _subscribed = true;
+        StateHasChanged();
+    }
 
-        _hub = new HubConnectionBuilder()
-            .WithUrl(Nav.ToAbsoluteUri("/hub/acars"))
-            .WithAutomaticReconnect()
-            .AddJsonProtocol(options =>
-            {
-                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
-            })
-            .Build();
-
-        // Handler runs on a SignalR thread — marshal onto the renderer's sync
-        // context before touching component state
-        _hub.On<Airframe>("Acars", frame => InvokeAsync(() =>
+    // Called on the input thread — marshal onto the renderer's sync context
+    private void OnFrame(Airframe frame)
+    {
+        if (_disposed) return;
+        _ = InvokeAsync(() =>
         {
-            // Always increment running total for this frame type
-            var key = frame.FrameType.ToString();
-            _totalCounts[key] = _totalCounts.GetValueOrDefault(key) + 1;
+            _totalCounts[frame.FrameType] = _totalCounts.GetValueOrDefault(frame.FrameType) + 1;
 
-            if (_isAtTop)
+            if (_isAtTop && !_paused)
             {
                 if (_messages.Count >= MaxMessages)
                     _messages.RemoveAt(_messages.Count - 1);
@@ -118,16 +139,49 @@
                 _pendingMessages.Enqueue(frame);
             }
 
-            StateHasChanged();
-        }));
+            ScheduleRender();
+        });
+    }
 
-        _hub.Reconnecting += _ => { _connected = false; return InvokeAsync(StateHasChanged); };
-        _hub.Reconnected  += _ => { _connected = true;  return InvokeAsync(StateHasChanged); };
-        _hub.Closed       += _ => { _connected = false; return InvokeAsync(StateHasChanged); };
+    private void ScheduleRender()
+    {
+        if (_renderScheduled) return;
+        _renderScheduled = true;
+        _ = Task.Delay(RenderInterval).ContinueWith(_ => InvokeAsync(() =>
+        {
+            _renderScheduled = false;
+            if (!_disposed) StateHasChanged();
+        }), TaskScheduler.Default);
+    }
 
-        await _hub.StartAsync();
-        _connected = true;
-        StateHasChanged();
+    private bool Matches(Airframe frame)
+    {
+        if (_hiddenTypes.Contains(frame.FrameType)) return false;
+        if (string.IsNullOrWhiteSpace(_search)) return true;
+
+        var term = _search.Trim();
+        var acars = frame.Protocol as Aviator.Airframe.Frames.Entities.Acars;
+        return Has(acars?.Registration) || Has(acars?.FlightNumber) || Has(acars?.Label)
+            || Has(acars?.Text) || Has(frame.Icao) || Has(frame.Channel);
+
+        bool Has(string? value) => value?.Contains(term, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private void ToggleType(FrameType type)
+    {
+        if (!_hiddenTypes.Remove(type)) _hiddenTypes.Add(type);
+    }
+
+    private void ResetFilter()
+    {
+        _hiddenTypes.Clear();
+        _search = "";
+    }
+
+    private void TogglePause()
+    {
+        _paused = !_paused;
+        if (!_paused && _isAtTop) FlushPending();
     }
 
     // Debounced via _scrollHandling flag — only one in-flight JS call at a time
@@ -140,11 +194,12 @@
             var atTop = await JS.InvokeAsync<bool>("isAtTop", _scrollContainer);
             if (atTop == _isAtTop) return;
             _isAtTop = atTop;
-            if (_isAtTop && _pendingMessages.Count > 0)
-            {
+            if (_isAtTop && !_paused && _pendingMessages.Count > 0)
                 FlushPending();
-                await InvokeAsync(StateHasChanged);
-            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit gone
         }
         finally
         {
@@ -154,17 +209,16 @@
 
     private void FlushPending()
     {
-        var batch = _pendingMessages.ToList();
-        _pendingMessages.Clear();
         // Enqueued oldest-first; insert at 0 so newest lands at top
-        foreach (var msg in batch)
+        while (_pendingMessages.TryDequeue(out var msg))
             _messages.Insert(0, msg);
-        while (_messages.Count > MaxMessages)
-            _messages.RemoveAt(_messages.Count - 1);
+        if (_messages.Count > MaxMessages)
+            _messages.RemoveRange(MaxMessages, _messages.Count - MaxMessages);
     }
 
     private async Task FlushPendingAndScrollToTop()
     {
+        _paused = false;
         FlushPending();
         _isAtTop = true;
         await JS.InvokeVoidAsync("scrollToTop", _scrollContainer);
@@ -176,9 +230,9 @@
         _pendingMessages.Clear();
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        if (_hub is not null)
-            await _hub.DisposeAsync();
+        _disposed = true;
+        Feed.Received -= OnFrame;
     }
 }

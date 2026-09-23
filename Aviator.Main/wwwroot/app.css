@@ -1,139 +1,320 @@
-/* Blazor reconnect overlay — dark theme */
+/* ══════════════════════════════════════════════════════════════════════════
+   Aviator — dark aviation theme on top of Bootstrap 5.3 (data-bs-theme="dark")
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --av-bg:          #0d1117;
+    --av-surface:     #161b22;
+    --av-surface-2:   #21262d;
+    --av-border:      #30363d;
+    --av-text:        #e6edf3;
+    --av-text-dim:    #adbac7;
+    --av-muted:       #8b949e;
+    --av-faint:       #484f58;
+    --av-accent:      #58a6ff;
+    --av-accent-hover:#79b8ff;
+    --av-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+    /* Frame types — keep in sync with frameColor() in js/map.js */
+    --av-vdl2:    #1f6feb;
+    --av-hfdl:    #e67700;
+    --av-acars:   #2da44e;
+    --av-aerol:   #a371f7;
+    --av-iridium: #db6d28;
+
+    /* Map Bootstrap's dark palette onto ours so utilities (.text-secondary, borders, forms) match */
+    --bs-body-bg: var(--av-bg);
+    --bs-body-color: var(--av-text);
+    --bs-secondary-color: var(--av-muted);
+    --bs-tertiary-bg: var(--av-surface);
+    --bs-border-color: var(--av-border);
+    --bs-secondary-border-subtle: var(--av-border);
+    --bs-link-color-rgb: 88, 166, 255;
+    --bs-link-hover-color-rgb: 121, 184, 255;
+}
+
+html, body {
+    background-color: var(--av-bg);
+    color: var(--av-text);
+}
+
+:focus-visible {
+    outline: 2px solid var(--av-accent);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+.min-w-0     { min-width: 0; }
+.gap-px      { gap: 1px; }
+.text-accent { color: var(--av-accent) !important; }
+.text-purple { color: var(--av-aerol) !important; }
+.text-orange { color: var(--av-iridium) !important; }
+.bg-accent   { background-color: var(--av-accent) !important; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+@keyframes pulse { 50% { opacity: .35; } }
+.live-dot { font-size: .55rem; animation: pulse 2s ease-in-out infinite; }
+
+/* Scrollbar */
+* { scrollbar-width: thin; scrollbar-color: var(--av-border) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--av-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--av-accent); }
+
+/* ── Reconnect overlay ─────────────────────────────────────────────────── */
 #components-reconnect-modal {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 2000;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, .65);
+    backdrop-filter: blur(2px);
     align-items: center;
     justify-content: center;
 }
 
 #components-reconnect-modal.components-reconnect-show,
+#components-reconnect-modal.components-reconnect-retrying,
 #components-reconnect-modal.components-reconnect-failed,
 #components-reconnect-modal.components-reconnect-rejected {
     display: flex;
 }
 
 .reconnect-box {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: var(--av-surface);
+    border: 1px solid var(--av-border);
     border-radius: 10px;
     padding: 24px 32px;
     text-align: center;
-    color: #e6edf3;
+    color: var(--av-text);
     min-width: 220px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
 }
 
-/* Show only the relevant state panel */
 .reconnect-state { display: none; }
 
-#components-reconnect-modal.components-reconnect-show .reconnect-state-show { display: block; }
-#components-reconnect-modal.components-reconnect-failed .reconnect-state-failed { display: block; }
-#components-reconnect-modal.components-reconnect-rejected .reconnect-state-rejected { display: block; }
-
-/* Bootstrap missing utilities */
-.min-w-0 { min-width: 0; }
-.gap-px  { gap: 1px; }
-
-/* Base overrides for dark aviation theme */
-html, body {
-    background-color: #0d1117;
-    color: #e6edf3;
+#components-reconnect-modal.components-reconnect-show     .reconnect-state-show,
+#components-reconnect-modal.components-reconnect-retrying .reconnect-state-show,
+#components-reconnect-modal.components-reconnect-failed   .reconnect-state-failed,
+#components-reconnect-modal.components-reconnect-rejected .reconnect-state-rejected {
+    display: block;
 }
 
-/* Pending-messages banner */
-.pending-banner {
-    background-color: #1f6feb;
-    color: #fff;
-    text-align: center;
-    padding: 5px 12px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    user-select: none;
+/* ── Navbar ────────────────────────────────────────────────────────────── */
+.navbar {
+    background-color: var(--av-surface) !important;
+}
+
+.nav-link.active {
+    color: var(--av-accent) !important;
+    box-shadow: inset 0 -2px 0 var(--av-accent);
+}
+
+@media (max-width: 991.98px) {
+    .nav-link.active { box-shadow: inset 2px 0 0 var(--av-accent); padding-left: .5rem; }
+}
+
+.nav-material-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.nav-search { width: 11rem; }
+@media (max-width: 991.98px) { .nav-search { width: 100%; } }
+
+/* ── Page chrome ───────────────────────────────────────────────────────── */
+.page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    border-bottom: 1px solid var(--av-border);
+    background-color: var(--av-bg);
     flex-shrink: 0;
 }
 
-.pending-banner:hover {
-    background-color: #388bfd;
+.toolbar-search { width: 15rem; }
+
+@media (max-width: 575.98px) {
+    .toolbar-end    { width: 100%; margin-left: 0 !important; }
+    .toolbar-search { flex: 1; width: auto; }
 }
 
-/* ACARS message card */
+.input-group-text {
+    background-color: var(--av-surface);
+    color: var(--av-muted);
+}
+
+.form-control, .form-control:focus {
+    background-color: var(--av-surface);
+    color: var(--av-text);
+}
+
+.form-control:focus {
+    border-color: var(--av-accent);
+    box-shadow: 0 0 0 .2rem rgba(88, 166, 255, .15);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    min-height: 240px;
+    padding: 2rem 1rem;
+    color: var(--av-muted);
+}
+
+.section-title {
+    color: var(--av-muted);
+    font-weight: 600;
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+}
+
+/* ── Frame-type badges / chips ─────────────────────────────────────────── */
+[class^="frame-badge-"], [class*=" frame-badge-"] {
+    --frame: var(--av-muted);
+    background-color: var(--frame);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    line-height: 1.5;
+}
+
+.frame-badge-vdl2    { --frame: var(--av-vdl2); }
+.frame-badge-hfdl    { --frame: var(--av-hfdl); }
+.frame-badge-acars   { --frame: var(--av-acars); }
+.frame-badge-aerol   { --frame: var(--av-aerol); }
+.frame-badge-iridium { --frame: var(--av-iridium); }
+
+.frame-chip {
+    border: 1px solid var(--frame);
+    cursor: pointer;
+    transition: background-color .15s, color .15s, opacity .15s;
+}
+
+.frame-chip:hover { filter: brightness(1.15); }
+
+.frame-chip.is-off {
+    background-color: transparent;
+    color: var(--frame);
+    opacity: .6;
+    text-decoration: line-through;
+}
+
+.frame-bar-vdl2    { background-color: var(--av-vdl2); }
+.frame-bar-hfdl    { background-color: var(--av-hfdl); }
+.frame-bar-acars   { background-color: var(--av-acars); }
+.frame-bar-aerol   { background-color: var(--av-aerol); }
+.frame-bar-iridium { background-color: var(--av-iridium); }
+
+/* ── ACARS live feed ───────────────────────────────────────────────────── */
+.pending-banner {
+    display: block;
+    width: 100%;
+    border: 0;
+    background-color: var(--av-vdl2);
+    color: #fff;
+    text-align: center;
+    padding: 5px 12px;
+    font-size: .82rem;
+    flex-shrink: 0;
+}
+
+.pending-banner:hover { background-color: #388bfd; }
+
 .acars-card {
-    background-color: #161b22;
-    border-color: #30363d !important;
-    transition: border-color 0.15s;
+    background-color: var(--av-surface);
+    border: 1px solid var(--av-border);
+    transition: border-color .15s;
+    animation: card-in .25s ease-out;
 }
 
-.acars-card:hover {
-    border-color: #58a6ff !important;
+.acars-card:hover { border-color: var(--av-accent); }
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(-4px); }
 }
+
+.flight-no {
+    font-family: var(--av-mono);
+    font-size: .78rem;
+    color: var(--av-text-dim);
+    background-color: var(--av-surface-2);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.reg-link { color: var(--av-text); }
+.reg-link:hover { color: var(--av-accent); text-decoration: underline !important; }
 
 /* Aircraft photo thumbnail */
-.acars-photo {
+.acars-photo,
+.acars-photo img,
+.acars-photo-placeholder {
     width: 120px;
     height: 80px;
 }
 
-.acars-photo img {
-    width: 120px;
-    height: 80px;
-    object-fit: cover;
+.acars-photo img { object-fit: cover; display: block; }
+
+.acars-photo-placeholder {
+    background-color: var(--av-surface-2);
+    border: 1px dashed var(--av-border);
 }
 
 .photo-credit {
-    font-size: 0.6rem;
-    color: #8b949e;
+    font-size: .6rem;
+    color: var(--av-muted);
     text-align: center;
     max-width: 120px;
     margin-top: 2px;
 }
 
-.acars-photo-placeholder {
-    width: 120px;
-    height: 80px;
-    background-color: #21262d;
-    border: 1px dashed #30363d;
-}
-
-/* Mobile: reduce photo size on small phones */
-@media (max-width: 479px) {
+@media (max-width: 479.98px) {
     .acars-photo,
     .acars-photo img,
-    .acars-photo-placeholder {
-        width: 80px;
-        height: 54px;
-    }
-    .photo-credit {
-        max-width: 80px;
-    }
+    .acars-photo-placeholder { width: 80px; height: 54px; }
+    .photo-credit { max-width: 80px; }
+    .acars-card .card-body { padding: .6rem !important; }
 }
 
-/* Very small screens: stack card content vertically */
-@media (max-width: 359px) {
-    .acars-card-content {
-        flex-wrap: wrap;
-    }
+@media (max-width: 359.98px) {
+    .acars-card-content { flex-wrap: wrap; }
     .acars-card-content .acars-photo,
     .acars-card-content .acars-photo img,
-    .acars-card-content .acars-photo-placeholder {
-        width: 100%;
-        height: 90px;
-    }
-    .acars-card-content .photo-credit {
-        max-width: 100%;
-    }
+    .acars-card-content .acars-photo-placeholder { width: 100%; height: 90px; }
+    .acars-card-content .photo-credit { max-width: 100%; }
 }
 
-/* Raw message text */
 .acars-text {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 0.78rem;
-    color: #adbac7;
+    font-family: var(--av-mono);
+    font-size: .78rem;
+    color: var(--av-text-dim);
     white-space: pre-wrap;
-    word-break: break-all;
-    background-color: #0d1117;
-    border: 1px solid #21262d;
+    overflow-wrap: anywhere;
+    background-color: var(--av-bg);
+    border: 1px solid var(--av-surface-2);
     border-radius: 6px;
     padding: 6px 10px;
     margin: 0;
@@ -141,223 +322,81 @@ html, body {
     overflow-y: auto;
 }
 
-/* Frame type color badges */
-.frame-badge-vdl2 {
-    background-color: #1f6feb;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    border-radius: 4px;
-}
-
-.frame-badge-hfdl {
-    background-color: #e67700;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    border-radius: 4px;
-}
-
-.frame-badge-acars {
-    background-color: #2da44e;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    border-radius: 4px;
-}
-
-.frame-badge-aerol {
-    background-color: #a371f7;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    border-radius: 4px;
-}
-
-.frame-badge-iridium {
-    background-color: #db6d28;
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 2px 7px;
-    border-radius: 4px;
-}
-
-/* Material Icons sizing inside navbar */
-.nav-material-icon {
-    font-size: 1.1rem;
-    line-height: 1;
-    vertical-align: middle;
-}
-
-/* Navbar tweaks */
-.navbar {
-    background-color: #161b22 !important;
-}
-
-.nav-link.active {
-    color: #58a6ff !important;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: #0d1117;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #30363d;
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #58a6ff;
-}
-
-/* Spinning refresh icon */
-@keyframes spin {
-    from { transform: rotate(0deg);   }
-    to   { transform: rotate(360deg); }
-}
-.spin { display: inline-block; animation: spin 1s linear infinite; }
-
-/* Stats page — progress bar fills matching frame badge colors */
-.frame-bar-vdl2    { background-color: #1f6feb; }
-.frame-bar-hfdl    { background-color: #e67700; }
-.frame-bar-acars   { background-color: #2da44e; }
-.frame-bar-aerol   { background-color: #a371f7; }
-.frame-bar-iridium { background-color: #db6d28; }
-
-/* Stats summary cards */
+/* ── Stats ─────────────────────────────────────────────────────────────── */
 .stat-card {
-    background-color: #161b22;
-    border-color: #30363d !important;
-    transition: border-color 0.15s;
-}
-.stat-card:hover {
-    border-color: #58a6ff !important;
+    background-color: var(--av-surface);
+    border: 1px solid var(--av-border) !important;
+    transition: border-color .15s;
 }
 
-/* 24h activity bar chart */
+.stat-card:hover { border-color: var(--av-accent) !important; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-sub {
+    display: block;
+    color: var(--av-muted);
+    font-size: .72rem;
+}
+
+.meter {
+    height: 5px;
+    background: var(--av-surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .4s ease;
+}
+
+.activity-slot {
+    flex: 1 1 0;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+}
+
 .activity-bar {
-    background-color: #1f6feb;
+    width: 100%;
+    min-height: 2px;
+    background-color: var(--av-vdl2);
     border-radius: 2px 2px 0 0;
-    opacity: 0.8;
-    min-height: 1px;
-    transition: opacity 0.15s;
-}
-.activity-bar:hover {
-    opacity: 1;
+    opacity: .8;
+    transition: opacity .15s, height .4s ease;
 }
 
-/* Mobile: make summary stat cards 2-per-row */
-@media (max-width: 575px) {
-    .stats-header-actions {
-        flex-wrap: nowrap;
-    }
+.activity-bar.is-empty { background-color: var(--av-surface-2); }
+.activity-slot:hover .activity-bar { opacity: 1; background-color: var(--av-accent); }
+
+.axis-label {
+    color: var(--av-muted);
+    font-size: .65rem;
+    font-variant-numeric: tabular-nums;
 }
 
-/* ── Map page ────────────────────────────────────────────── */
-.map-container {
-    min-height: 0; /* prevents flex overflow */
+.rank-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .25rem 0;
+    border-bottom: 1px dashed var(--av-border);
 }
 
-.map-range-input {
-    width: 90px;
-    background-color: #161b22;
-    border-color: #30363d;
-    color: #e6edf3;
-}
-.map-range-input:focus {
-    background-color: #161b22;
-    border-color: #58a6ff;
-    color: #e6edf3;
-    box-shadow: 0 0 0 0.2rem rgba(88,166,255,.15);
-}
+.rank-row:last-child { border-bottom: 0; }
+.rank-row .meter     { height: 4px; }
+.rank-key            { min-width: 5.5rem; }
+.rank-key-wide       { min-width: 6.5rem; }
+.rank-count          { min-width: 2.5rem; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* Leaflet overrides for dark theme */
-.leaflet-container {
-    background: #161b22;
-    font-family: inherit;
-}
-.leaflet-control-layers {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    color: #e6edf3 !important;
-}
-.leaflet-control-layers label {
-    color: #e6edf3 !important;
-}
-.leaflet-control-zoom a {
-    background-color: #161b22 !important;
-    border-color: #30363d !important;
-    color: #e6edf3 !important;
-}
-.leaflet-control-zoom a:hover {
-    background-color: #21262d !important;
-}
-.leaflet-control-attribution {
-    background: rgba(13,17,23,.8) !important;
-    color: #8b949e !important;
-}
-.leaflet-control-attribution a { color: #58a6ff !important; }
-
-/* Aircraft marker — remove Leaflet wrapper background */
-.av-aircraft-icon {
-    background: transparent !important;
-    border: none !important;
-}
-
-/* METAR temperature badge on map */
-.av-metar-badge {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 1px 5px;
-    border: 1.5px solid;
-    border-radius: 4px;
-    background: rgba(13,17,23,.85);
-    white-space: nowrap;
-    pointer-events: none;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    line-height: 1.4;
-}
-
-/* Leaflet tooltip */
-.av-tooltip.leaflet-tooltip {
-    background: #161b22;
-    border: 1px solid #30363d;
-    color: #e6edf3;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.5);
-}
-.av-tooltip.leaflet-tooltip::before { border-top-color: #30363d !important; }
-
-/* Leaflet popup */
-.av-popup .leaflet-popup-content-wrapper {
-    background: #161b22;
-    border: 1px solid #30363d;
-    color: #e6edf3;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.6);
-}
-.av-popup .leaflet-popup-tip { background: #161b22; }
-.av-popup .leaflet-popup-close-button { color: #8b949e !important; }
-.av-popup .leaflet-popup-content { margin: 10px 14px; font-size: 0.82rem; line-height: 1.6; }
-
-.av-popup-title {
-    font-weight: 600;
-    font-size: 0.88rem;
-    margin-bottom: 4px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #30363d;
-}
-
-/* ── Aircraft detail page ─────────────────────────────────── */
+/* ── Aircraft detail ───────────────────────────────────────────────────── */
 .aircraft-photo-card {
     overflow: hidden;
     padding: 6px;
@@ -369,23 +408,115 @@ html, body {
 .aircraft-photo-card img {
     max-width: 280px;
     max-height: 180px;
+    width: 100%;
     object-fit: cover;
 }
 
-.aircraft-track-map {
-    height: 320px;
-    min-height: 0;
+.aircraft-track-map { height: 360px; }
+@media (max-width: 575.98px) { .aircraft-track-map { height: 260px; } }
+
+/* ── Map ───────────────────────────────────────────────────────────────── */
+.map-container { min-height: 0; }
+.map-range-input { width: 90px; }
+
+.leaflet-container {
+    background: var(--av-surface);
+    font-family: inherit;
 }
 
-/* Registration link on cards */
-.reg-link { color: #e6edf3; }
-.reg-link:hover { color: #58a6ff; text-decoration: underline !important; }
+/* OSM tiles darkened in-browser — the "Dark" base layer */
+.av-tiles-dark {
+    filter: invert(1) hue-rotate(180deg) brightness(.95) contrast(.9) saturate(.6);
+}
 
-/* ── Generic decoded panels (OOOI, Media Advisory, …) ─────── */
-.decoded-panel {
+.leaflet-control-layers,
+.leaflet-bar a,
+.leaflet-control-scale-line {
+    background: var(--av-surface) !important;
+    border-color: var(--av-border) !important;
+    color: var(--av-text) !important;
+}
+
+.leaflet-control-layers { border: 1px solid var(--av-border) !important; }
+.leaflet-control-layers label { color: var(--av-text) !important; }
+.leaflet-control-layers-separator { border-top-color: var(--av-border) !important; }
+.leaflet-bar a:hover { background-color: var(--av-surface-2) !important; }
+.leaflet-control-layers-toggle { filter: invert(1); }
+
+.leaflet-control-attribution {
+    background: rgba(13, 17, 23, .8) !important;
+    color: var(--av-muted) !important;
+}
+
+.leaflet-control-attribution a { color: var(--av-accent) !important; }
+
+.av-aircraft-icon {
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer;
+}
+
+.av-metar-badge {
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border: 1.5px solid;
+    border-radius: 4px;
+    background: rgba(13, 17, 23, .85);
+    white-space: nowrap;
+    font-family: var(--av-mono);
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.av-tooltip.leaflet-tooltip {
+    background: var(--av-surface);
+    border: 1px solid var(--av-border);
+    color: var(--av-text);
+    border-radius: 6px;
+    font-size: .8rem;
+    padding: 4px 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .5);
+}
+
+.av-tooltip.leaflet-tooltip-top::before { border-top-color: var(--av-border); }
+
+.av-popup .leaflet-popup-content-wrapper {
+    background: var(--av-surface);
+    border: 1px solid var(--av-border);
+    color: var(--av-text);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .6);
+}
+
+.av-popup .leaflet-popup-tip { background: var(--av-surface); }
+.av-popup .leaflet-popup-close-button { color: var(--av-muted) !important; }
+.av-popup .leaflet-popup-content { margin: 10px 14px; font-size: .82rem; line-height: 1.6; }
+
+.av-popup-title {
+    font-weight: 600;
+    font-size: .88rem;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--av-border);
+}
+
+.av-popup-link {
+    display: inline-block;
+    margin-top: 4px;
+    color: var(--av-accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.av-popup-link:hover { text-decoration: underline; }
+
+/* ── Decoded panels (OOOI, Media Advisory, …) ──────────────────────────── */
+.decoded-panel,
+.metar-panel {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid #21262d;
+    border-top: 1px solid var(--av-surface-2);
 }
 
 .decoded-header {
@@ -394,22 +525,22 @@ html, body {
     align-items: center;
     gap: 8px;
     margin-bottom: 4px;
-    font-size: 0.8rem;
+    font-size: .8rem;
 }
 
-.decoded-type-badge {
-    font-size: 0.65rem;
+.decoded-type-badge,
+.metar-type-badge {
+    font-size: .65rem;
     font-weight: 600;
     padding: 1px 5px;
     border-radius: 3px;
-    letter-spacing: 0.03em;
+    letter-spacing: .03em;
     color: #fff;
 }
 
-.decoded-oooi  { background-color: #db6d28; }
+.decoded-oooi  { background-color: var(--av-iridium); }
 .decoded-media { background-color: #8957e5; }
 
-/* OOOI phase timeline */
 .oooi-timeline {
     display: flex;
     align-items: stretch;
@@ -425,48 +556,36 @@ html, body {
     gap: 1px;
     min-width: 58px;
     padding: 4px 8px;
-    border: 1px dashed #30363d;
+    border: 1px dashed var(--av-border);
     border-radius: 6px;
-    color: #484f58;
-    font-size: 0.72rem;
+    color: var(--av-faint);
+    font-size: .72rem;
 }
 
 .oooi-phase-active {
     border-style: solid;
-    border-color: #db6d28;
-    color: #e6edf3;
-    background: rgba(219,109,40,0.08);
+    border-color: var(--av-iridium);
+    color: var(--av-text);
+    background: rgba(219, 109, 40, .08);
 }
 
-.oooi-phase-active i { color: #db6d28; }
+.oooi-phase-active i { color: var(--av-iridium); }
+.oooi-phase-label { font-weight: 600; letter-spacing: .04em; }
+.oooi-phase-time { font-family: var(--av-mono); color: var(--av-text-dim); }
 
-.oooi-phase-label { font-weight: 600; letter-spacing: 0.04em; }
-
-.oooi-phase-time {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    color: #adbac7;
-}
-
-/* Media advisory badges */
 .media-badge {
-    font-size: 0.72rem;
-    background-color: rgba(137,87,229,0.15);
-    color: #a371f7;
+    font-size: .72rem;
+    background-color: rgba(137, 87, 229, .15);
+    color: var(--av-aerol);
     padding: 1px 6px;
     border-radius: 3px;
 }
 
-/* ── METAR decoded panel ──────────────────────────────────── */
-.metar-panel {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #21262d;
-}
-
+/* ── METAR decoded panel ───────────────────────────────────────────────── */
 .metar-report + .metar-report {
     margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px dashed #30363d;
+    border-top: 1px dashed var(--av-border);
 }
 
 .metar-header {
@@ -477,16 +596,8 @@ html, body {
     margin-bottom: 4px;
 }
 
-.metar-type-badge {
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 1px 5px;
-    border-radius: 3px;
-    letter-spacing: 0.03em;
-}
-
-.metar-regular { background-color: #1f6feb; color: #fff; }
-.metar-speci   { background-color: #d29922; color: #fff; }
+.metar-regular { background-color: var(--av-vdl2); }
+.metar-speci   { background-color: #d29922; }
 
 .metar-body {
     display: flex;
@@ -494,8 +605,8 @@ html, body {
     align-items: center;
     gap: 10px;
     margin-bottom: 2px;
-    font-size: 0.8rem;
-    color: #adbac7;
+    font-size: .8rem;
+    color: var(--av-text-dim);
 }
 
 .metar-item {
@@ -506,9 +617,9 @@ html, body {
 
 .metar-wind-arrow {
     display: inline-block;
-    font-size: 0.9rem;
+    font-size: .9rem;
     line-height: 1;
-    opacity: 0.8;
+    opacity: .8;
 }
 
 .metar-cloud {
@@ -517,27 +628,26 @@ html, body {
     gap: 3px;
     padding: 1px 6px;
     border-radius: 3px;
-    font-size: 0.75rem;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: .75rem;
+    font-family: var(--av-mono);
 }
 
 .metar-cloud-skc,
 .metar-cloud-clr,
 .metar-cloud-ncd,
-.metar-cloud-nsc { background-color: rgba(45,164,78,0.15); color: #3fb950; }
-
-.metar-cloud-few { background-color: rgba(31,111,235,0.15); color: #58a6ff; }
-.metar-cloud-sct { background-color: rgba(210,153,34,0.15); color: #d29922; }
-.metar-cloud-bkn { background-color: rgba(219,109,40,0.15); color: #ffa94d; }
-.metar-cloud-ovc { background-color: rgba(248,81,73,0.15);  color: #ff7b72; }
-.metar-cloud-vv  { background-color: rgba(163,113,247,0.15); color: #a371f7; }
+.metar-cloud-nsc { background-color: rgba(45, 164, 78, .15);  color: #3fb950; }
+.metar-cloud-few { background-color: rgba(31, 111, 235, .15); color: var(--av-accent); }
+.metar-cloud-sct { background-color: rgba(210, 153, 34, .15); color: #d29922; }
+.metar-cloud-bkn { background-color: rgba(219, 109, 40, .15); color: #ffa94d; }
+.metar-cloud-ovc { background-color: rgba(248, 81, 73, .15);  color: #ff7b72; }
+.metar-cloud-vv  { background-color: rgba(163, 113, 247, .15); color: var(--av-aerol); }
 
 .metar-wx-badge {
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 0.75rem;
-    background-color: rgba(88,166,255,0.12);
-    color: #58a6ff;
+    font-family: var(--av-mono);
+    font-size: .75rem;
+    background-color: rgba(88, 166, 255, .12);
+    color: var(--av-accent);
     padding: 1px 6px;
     border-radius: 3px;
-    cursor: default;
+    cursor: help;
 }

@@ -5,7 +5,7 @@
     <div class="decoded-header">
         <span class="decoded-type-badge decoded-media">MEDIA</span>
         <span class="@(Message.LinkEstablished ? "text-success" : "text-warning")">
-            <i class="bi @(Message.LinkEstablished ? "bi-link-45deg" : "bi-link-45deg") me-1"></i>
+            <i class="bi @(Message.LinkEstablished ? "bi-link-45deg" : "bi-x-circle") me-1"></i>
             @Message.Medium link @(Message.LinkEstablished ? "established" : "lost")
         </span>
         <span class="text-secondary small">@Message.Time z</span>

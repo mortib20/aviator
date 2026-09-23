@@ -2,7 +2,7 @@
 @inject IJSRuntime JS
 @inject DecoderRegistry DecoderRegistry
 
-<div class="card border-secondary-subtle acars-card">
+<div class="card acars-card">
     <div class="card-body p-3">
         <div class="acars-card-content d-flex gap-3 align-items-start">
 
@@ -10,7 +10,7 @@
             <div class="acars-photo flex-shrink-0">
                 @if (_photo?.Url is not null)
                 {
-                    <a href="@_photo.Link" target="_blank" title="View on Planespotters.net">
+                    <a href="@_photo.Link" target="_blank" rel="noopener noreferrer" title="View on Planespotters.net">
                         <img src="@_photo.Url" alt="@Registration" class="rounded" loading="lazy" />
                     </a>
                     @if (!string.IsNullOrEmpty(_photo.Photographer))
@@ -42,17 +42,19 @@
                     {
                         <span class="text-secondary font-monospace small">@Message.Icao.ToUpperInvariant()</span>
                     }
+                    @if (!string.IsNullOrEmpty(FlightNumber))
+                    {
+                        <span class="flight-no" title="Flight number">@FlightNumber</span>
+                    }
                     @if (!string.IsNullOrEmpty(Label))
                     {
                         <span class="badge bg-secondary" title="@(AcarsLabels.Describe(Label) ?? "Unknown label")">@Label</span>
                     }
                     @if (!string.IsNullOrEmpty(Message.Channel))
                     {
-                        <span class="text-secondary small ms-auto">@Message.Channel MHz</span>
+                        <span class="text-secondary small ms-auto">@ChannelFormat.Mhz(Message.Channel)</span>
                     }
-                    <span class="text-secondary small" title="@Message.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")">
-                        @Message.Timestamp.ToLocalTime().ToString("HH:mm:ss")
-                    </span>
+                    <LocalTime Value="Message.Timestamp" Class="@(string.IsNullOrEmpty(Message.Channel) ? "text-secondary small ms-auto" : "text-secondary small")" />
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(Text))
@@ -106,21 +108,13 @@
 
     private PhotoData? _photo;
     private IDecodedMessage? _decoded;
+    private Airframe? _decodedFor;
 
-    private string Registration => GetProtocolString("registration");
-    private string Label => GetProtocolString("label");
-    private string Text => GetProtocolString("text");
-
-    private string GetProtocolString(string key)
-    {
-        if (Message.Protocol is not JsonElement { ValueKind: JsonValueKind.Object } el) return "";
-        if (el.TryGetProperty(key, out var prop) && prop.ValueKind == JsonValueKind.String)
-            return prop.GetString() ?? "";
-        var pascal = $"{char.ToUpper(key[0])}{key[1..]}";
-        if (el.TryGetProperty(pascal, out prop) && prop.ValueKind == JsonValueKind.String)
-            return prop.GetString() ?? "";
-        return "";
-    }
+    private Acars? Payload => Message.Protocol as Acars;
+    private string Registration => Payload?.Registration ?? "";
+    private string FlightNumber => Payload?.FlightNumber ?? "";
+    private string Label => Payload?.Label ?? "";
+    private string Text => Payload?.Text ?? "";
 
     private static string OsmUrl(Position p) => FormattableString.Invariant(
         $"https://www.openstreetmap.org/?mlat={p.Latitude}&mlon={p.Longitude}#map=9/{p.Latitude}/{p.Longitude}");
@@ -129,7 +123,12 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        _decoded = DecoderRegistry.TryDecode(Label, Text);
+        // The parent re-renders on every incoming frame; only decode once per message
+        if (!ReferenceEquals(_decodedFor, Message))
+        {
+            _decodedFor = Message;
+            _decoded = DecoderRegistry.TryDecode(Label, Text);
+        }
 
         var reg = Registration;
         if (string.IsNullOrEmpty(reg) || reg == _photoReg) return;
@@ -138,9 +137,9 @@
         {
             _photo = await JS.InvokeAsync<PhotoData?>("fetchPlanespottersPhoto", reg);
         }
-        catch
+        catch (Exception e) when (e is InvalidOperationException or JSDisconnectedException or TaskCanceledException)
         {
-            // JS not yet available during SSR prerender — photo stays null
+            // JS unavailable (prerender / circuit gone) — photo stays null
         }
     }
 

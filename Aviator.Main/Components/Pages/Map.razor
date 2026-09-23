@@ -7,20 +7,23 @@
 <div class="d-flex flex-column h-100">
 
     @* ── Header ──────────────────────────────────────────────── *@
-    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom border-secondary-subtle">
+    <div class="page-toolbar">
         <h6 class="mb-0 fw-semibold me-1">Map</h6>
 
-        @foreach (var q in new[] { "1h", "12h", "1d" })
-        {
-            <button class="btn btn-sm py-0 @(_rangeInput == q ? "btn-primary" : "btn-outline-secondary")"
-                    @onclick="() => ApplyRangeAsync(q)">@q</button>
-        }
+        <div class="btn-group btn-group-sm" role="group" aria-label="Time range">
+            @foreach (var q in Presets)
+            {
+                <button class="btn py-0 @(_rangeInput == q ? "btn-primary" : "btn-outline-secondary")"
+                        @onclick="() => ApplyRangeAsync(q)">@q</button>
+            }
+        </div>
 
         <input class="form-control form-control-sm map-range-input"
                @bind="_rangeInput"
                @bind:event="oninput"
                @onkeyup="OnKeyUpAsync"
-               placeholder="e.g. 6h, 2d" />
+               placeholder="e.g. 6h, 2d"
+               aria-label="Custom time range" />
 
         <button class="btn btn-sm btn-outline-secondary py-0"
                 @onclick="ReloadAsync"
@@ -28,6 +31,12 @@
                 disabled="@_loading">
             <i class="bi bi-arrow-clockwise @(_loading ? "spin" : "")"></i>
         </button>
+
+        <div class="form-check form-switch mb-0 small" title="Reload every @AutoRefreshSeconds s">
+            <input class="form-check-input" type="checkbox" role="switch" id="map-auto"
+                   checked="@_autoRefresh" @onchange="ToggleAutoRefresh" />
+            <label class="form-check-label text-secondary" for="map-auto">Auto</label>
+        </div>
 
         @if (!string.IsNullOrEmpty(_status))
         {
@@ -45,6 +54,12 @@
     private string _status     = "";
     private bool   _loading;
     private bool   _initialized;
+    private bool   _autoRefresh;
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource? _timerCts;
+
+    private static readonly string[] Presets = ["1h", "6h", "12h", "1d", "3d"];
+    private const int AutoRefreshSeconds = 60;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -65,9 +80,43 @@
         if (e.Key == "Enter") await ReloadAsync();
     }
 
-    private async Task ReloadAsync()
+    private void ToggleAutoRefresh(ChangeEventArgs e)
     {
-        if (!_initialized) return;
+        _autoRefresh = e.Value is true;
+        StopTimer();
+        if (_autoRefresh) _ = RunTimerAsync();
+    }
+
+    private async Task RunTimerAsync()
+    {
+        _timerCts = new CancellationTokenSource();
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(AutoRefreshSeconds));
+        var ct = _timerCts.Token;
+        try
+        {
+            while (await _timer.WaitForNextTickAsync(ct))
+                await InvokeAsync(() => ReloadAsync(fit: false));
+        }
+        catch (OperationCanceledException)
+        {
+            // Stopped via toggle or dispose
+        }
+    }
+
+    private void StopTimer()
+    {
+        _timerCts?.Cancel();
+        _timerCts?.Dispose();
+        _timerCts = null;
+        _timer?.Dispose();
+        _timer = null;
+    }
+
+    private Task ReloadAsync() => ReloadAsync(fit: true);
+
+    private async Task ReloadAsync(bool fit)
+    {
+        if (!_initialized || _loading) return;
 
         if (!TimeRange.TryParse(_rangeInput, out var span))
         {
@@ -88,11 +137,16 @@
             var result = await JS.InvokeAsync<LoadResult>(
                 "AviatorMap.loadData",
                 from.ToString("O"),
-                to.ToString("O"));
+                to.ToString("O"),
+                fit);
 
             _status = result.AircraftCount == 0 && result.StationsCount == 0
                 ? "No data for this range"
                 : $"{result.AircraftCount} aircraft · {result.StationsCount} METAR stations";
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
         }
         catch
         {
@@ -107,6 +161,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        StopTimer();
         if (!_initialized) return;
         try
         {

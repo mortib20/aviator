@@ -7,6 +7,49 @@ const AviatorMap = (() => {
     const _tracks  = {};  // icao → L.polyline (pre-built, not on map yet)
     const _shown   = {};  // icao → bool
 
+    // Registrations, flight data and METAR text arrive over the air — never
+    // interpolate them into tooltip/popup HTML unescaped
+    function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
+    }
+
+    function fmtUtc(iso) {
+        return new Date(iso).toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+    }
+
+    function fmtLocal(iso) {
+        return new Date(iso).toLocaleString(undefined, {
+            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    }
+
+    // ── Base layers ──────────────────────────────────────────────────────────
+
+    const OSM_URL  = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+    function baseLayers() {
+        return {
+            // Same OSM tiles, darkened via CSS filter (.av-tiles-dark) — no extra tile provider needed
+            'Dark':  L.tileLayer(OSM_URL, { attribution: OSM_ATTR, maxZoom: 19, className: 'av-tiles-dark' }),
+            'Light': L.tileLayer(OSM_URL, { attribution: OSM_ATTR, maxZoom: 19 })
+        };
+    }
+
+    function preferredBase(layers) {
+        let name = 'Dark';
+        try { name = localStorage.getItem('av-map-base') || name; } catch { /* storage blocked */ }
+        return layers[name] || layers['Dark'];
+    }
+
+    function rememberBase(map) {
+        map.on('baselayerchange', e => {
+            try { localStorage.setItem('av-map-base', e.name); } catch { /* storage blocked */ }
+        });
+    }
+
     // ── Frame-type colours (match CSS badges) ────────────────────────────────
 
     function frameColor(frameType) {
@@ -32,25 +75,27 @@ const AviatorMap = (() => {
             zoomControl: true
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            maxZoom: 19
-        }).addTo(_map);
+        const bases = baseLayers();
+        preferredBase(bases).addTo(_map);
+        rememberBase(_map);
 
         _aircraftLayer = L.layerGroup().addTo(_map);
         _metarLayer    = L.layerGroup().addTo(_map);
 
-        L.control.layers(null, {
+        // Collapsed on small screens so the control doesn't cover half the map
+        L.control.layers(bases, {
             'Aircraft':       _aircraftLayer,
             'METAR Stations': _metarLayer
-        }, { collapsed: false, position: 'topright' }).addTo(_map);
+        }, { collapsed: window.innerWidth < 768, position: 'topright' }).addTo(_map);
+        L.control.scale({ imperial: false }).addTo(_map);
 
         setTimeout(() => _map && _map.invalidateSize(), 150);
     }
 
     // ── Load data from API ────────────────────────────────────────────────────
 
-    async function loadData(fromIso, toIso) {
+    // fit: only zoom to the data on explicit loads, not on auto-refresh
+    async function loadData(fromIso, toIso, fit = true) {
         if (!_map) return { aircraftCount: 0, stationsCount: 0 };
         try {
             const url = `/api/map/data?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
@@ -58,10 +103,13 @@ const AviatorMap = (() => {
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const data = await resp.json();
 
+            // Keep tracks the user opened visible across refreshes
+            const reopen = Object.keys(_shown).filter(k => _shown[k]);
             clearTracks();
             renderAircraft(data.aircraft || []);
             renderMetarStations(data.metarStations || []);
-            fitToData(data.aircraft || [], data.metarStations || []);
+            reopen.forEach(icao => { if (_tracks[icao]) { _tracks[icao].addTo(_map); _shown[icao] = true; } });
+            if (fit) fitToData(data.aircraft || [], data.metarStations || []);
 
             return {
                 aircraftCount: (data.aircraft || []).length,
@@ -83,23 +131,34 @@ const AviatorMap = (() => {
             const color   = frameColor(a.frameType);
             const heading = computeHeading(a.track);
             const icon    = aircraftIcon(heading, color);
-            const label   = a.registration || a.icao;
+            const label   = esc(a.registration || a.icao.toUpperCase());
             const alt     = a.lastAltFt != null ? `${a.lastAltFt.toLocaleString()} ft` : '';
-            const ts      = new Date(a.lastSeen).toUTCString().replace(' GMT', ' UTC');
             const ftBadge = a.frameType
-                ? `<span style="color:${color};font-size:.75em;opacity:.9"> ${a.frameType}</span>`
+                ? `<span style="color:${color};font-size:.75em;opacity:.9"> ${esc(a.frameType)}</span>`
                 : '';
+            const detail  = a.registration
+                ? `<br><a href="/aircraft/${encodeURIComponent(a.registration)}" class="av-popup-link">Details →</a>`
+                : '';
+            const points  = a.track ? a.track.length : 0;
 
-            const marker = L.marker([a.lastLat, a.lastLon], { icon, title: label })
+            const marker = L.marker([a.lastLat, a.lastLon], { icon, title: a.registration || a.icao })
                 .bindTooltip(
                     `<b>${label}</b>${ftBadge}${alt ? '<br>' + alt : ''}`
-                    + `<br><span style="opacity:.6;font-size:.8em">${ts}</span>`,
+                    + `<br><span style="opacity:.6;font-size:.8em">${fmtLocal(a.lastSeen)}</span>`,
                     { direction: 'top', offset: [0, -12], className: 'av-tooltip' }
                 )
-                .on('click', e => {
-                    L.DomEvent.stopPropagation(e);
-                    toggleTrack(a.icao, color);
-                });
+                .bindPopup(
+                    `<div class="av-popup-title">${label}${ftBadge}</div>`
+                    // icao falls back to the registration server-side when no hex is known
+                    + (a.icao !== a.registration
+                        ? `<div>ICAO <span class="font-monospace">${esc(a.icao.toUpperCase())}</span></div>` : '')
+                    + (alt ? `<div>${alt}</div>` : '')
+                    + `<div>${points} position${points === 1 ? '' : 's'}</div>`
+                    + `<div style="opacity:.5;font-size:.75em;margin-top:4px">${fmtUtc(a.lastSeen)}</div>`
+                    + detail,
+                    { maxWidth: 240, className: 'av-popup' }
+                )
+                .on('click', () => toggleTrack(a.icao));
 
             _aircraftLayer.addLayer(marker);
 
@@ -113,7 +172,7 @@ const AviatorMap = (() => {
         });
     }
 
-    function toggleTrack(icao, color) {
+    function toggleTrack(icao) {
         const poly = _tracks[icao];
         if (!poly) return;
 
@@ -162,7 +221,7 @@ const AviatorMap = (() => {
         _metarLayer.clearLayers();
         stations.forEach(s => {
             L.marker([s.lat, s.lon], { icon: metarIcon(s.temperature), zIndexOffset: -100 })
-                .bindTooltip(s.icao, { permanent: false, className: 'av-tooltip av-metar-hover' })
+                .bindTooltip(esc(s.icao), { permanent: false, className: 'av-tooltip av-metar-hover' })
                 .bindPopup(buildMetarPopup(s), { maxWidth: 260, className: 'av-popup' })
                 .addTo(_metarLayer);
         });
@@ -173,14 +232,14 @@ const AviatorMap = (() => {
         const str = t != null ? `${t}°` : '?';
         const col = tempColor(temp);
         return L.divIcon({
-            html: `<div class="av-metar-badge" style="border-color:${col};color:${col}">${str}</div>`,
+            html: `<div class="av-metar-badge" style="border-color:${col};color:${col}">${esc(str)}</div>`,
             iconSize: [40, 22], iconAnchor: [20, 11], className: ''
         });
     }
 
     function buildMetarPopup(s) {
         const rows = [];
-        rows.push(`<div class="av-popup-title">${s.icao} <span style="font-weight:400;opacity:.7">${s.name}</span></div>`);
+        rows.push(`<div class="av-popup-title">${esc(s.icao)} <span style="font-weight:400;opacity:.7">${esc(s.name)}</span></div>`);
         if (s.temperature != null) {
             const tc = tempColor(s.temperature);
             rows.push(`<div><span style="color:${tc}">&#x1F321; ${s.temperature}°C</span>`
@@ -197,9 +256,8 @@ const AviatorMap = (() => {
             rows.push(`<div>&#x1F441; ${formatVis(s.visibilityMeters)}</div>`);
         }
         if (s.qnh != null) rows.push(`<div>&#x2B55; ${s.qnh} hPa</div>`);
-        if (s.trend) rows.push(`<div style="opacity:.65;font-size:.82em">${s.trend}</div>`);
-        const ts = new Date(s.timestamp).toUTCString().replace(' GMT', ' UTC');
-        rows.push(`<div style="opacity:.5;font-size:.75em;margin-top:4px">${ts}</div>`);
+        if (s.trend) rows.push(`<div style="opacity:.65;font-size:.82em">${esc(s.trend)}</div>`);
+        rows.push(`<div style="opacity:.5;font-size:.75em;margin-top:4px">${fmtUtc(s.timestamp)}</div>`);
         return rows.join('');
     }
 
@@ -246,17 +304,9 @@ const AviatorMap = (() => {
 
     let _detailMap = null;
 
-    function osmLayer() {
-        return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            maxZoom: 19
-        });
-    }
-
     function trackPointTooltip(p) {
         const alt = p.altFt != null ? `${p.altFt.toLocaleString()} ft<br>` : '';
-        const ts  = new Date(p.ts).toUTCString().replace(' GMT', ' UTC');
-        return `${alt}<span style="opacity:.6;font-size:.8em">${ts}</span>`;
+        return `${alt}<span style="opacity:.6;font-size:.8em">${fmtLocal(p.ts)}</span>`;
     }
 
     function showTrack(elementId, points, frameType) {
@@ -264,7 +314,10 @@ const AviatorMap = (() => {
         if (!points || points.length === 0) return;
 
         _detailMap = L.map(elementId, { preferCanvas: true });
-        osmLayer().addTo(_detailMap);
+        const bases = baseLayers();
+        preferredBase(bases).addTo(_detailMap);
+        rememberBase(_detailMap);
+        L.control.layers(bases, null, { collapsed: true }).addTo(_detailMap);
 
         const color   = frameColor(frameType);
         const latlngs = points.map(p => [p.lat, p.lon]);

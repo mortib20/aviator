@@ -1,0 +1,16 @@
+@implements IDisposable
+@inject ClientTime Clock
+
+<span title="@Clock.Format(Value, "yyyy-MM-dd HH:mm:ss")" class="@Class">@Clock.Format(Value, Format)</span>
+
+@code {
+    [Parameter, EditorRequired] public DateTimeOffset Value { get; set; }
+    [Parameter] public string Format { get; set; } = "HH:mm:ss";
+    [Parameter] public string? Class { get; set; }
+
+    protected override void OnInitialized() => Clock.Changed += OnClockChanged;
+
+    private void OnClockChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Clock.Changed -= OnClockChanged;
+}

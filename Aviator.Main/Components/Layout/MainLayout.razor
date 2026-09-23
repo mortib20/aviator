@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject ClientTime Clock
+@inject IJSRuntime JS
 
 <div class="d-flex flex-column vh-100">
     <NavMenu />
@@ -6,3 +8,20 @@
         @Body
     </main>
 </div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            // JS getTimezoneOffset() is minutes *behind* UTC, hence the sign flip
+            var minutes = await JS.InvokeAsync<int>("getTimezoneOffset");
+            Clock.SetOffset(TimeSpan.FromMinutes(-minutes));
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit gone before the offset arrived — times stay in UTC
+        }
+    }
+}

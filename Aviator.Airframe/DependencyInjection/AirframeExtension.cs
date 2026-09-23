@@ -47,6 +47,7 @@ public static class AirframeExtension
         builder.Services.AddAllImplementations<IDecoderStrategy>(ServiceLifetime.Singleton);
 
         builder.Services.AddSingleton<AirframeHub>();
+        builder.Services.AddSingleton<AirframeFeed>();
 
         var dbConfig = builder.Configuration.GetSection(DatabaseConfig.Section).Get<DatabaseConfig>();
         if (dbConfig is not null && !string.IsNullOrWhiteSpace(dbConfig.ConnectionString))
@@ -61,8 +62,9 @@ public static class AirframeExtension
             var decoderStrategies = sp.GetRequiredService<List<IDecoderStrategy>>();
             var outputManager = sp.GetRequiredService<IAirframeOutputManager>();
             var airframeHub = sp.GetRequiredService<IHubContext<AirframeHub>>();
+            var airframeFeed = sp.GetRequiredService<AirframeFeed>();
             var dbContextFactory = sp.GetService<IDbContextFactory<AviatorDbContext>>();
-            return new AirframeHandler(logger, decoderStrategies, outputManager, airframeHub, dbContextFactory);
+            return new AirframeHandler(logger, decoderStrategies, outputManager, airframeHub, airframeFeed, dbContextFactory);
         });
 
         builder.Services.AddHostedService<AirframeService>();

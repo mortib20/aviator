@@ -14,6 +14,7 @@ public class AirframeHandler(
     ICollection<IDecoderStrategy> decoderStrategies,
     IAirframeOutputManager airframeOutputManager,
     IHubContext<AirframeHub> airframeHub,
+    AirframeFeed airframeFeed,
     IDbContextFactory<AviatorDbContext>? dbContextFactory)
 {
     public async Task HandleAirframeAsync(byte[] rawBytes, JsonElement rawAirframe, CancellationToken cancellationToken)
@@ -48,6 +49,7 @@ public class AirframeHandler(
 
         if (airframe is { FrameType: FrameType.Vdl2 or FrameType.AeroL or FrameType.Acars or FrameType.Hfdl or FrameType.Iridium, ProtocolType: ProtocolType.Acars, Protocol: not null })
         {
+            airframeFeed.Publish(airframe);
             await airframeHub.Clients.All.SendAsync("Acars", airframe, cancellationToken).ConfigureAwait(false);
         }
 

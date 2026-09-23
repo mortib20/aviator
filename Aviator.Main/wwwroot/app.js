@@ -1,33 +1,44 @@
+'use strict';
+
+// Minutes behind UTC (JS convention) — MainLayout converts it to a UTC offset
+window.getTimezoneOffset = () => new Date().getTimezoneOffset();
+
 // Scroll helpers for ACARS page
 window.isAtTop = function (element) {
     return element.scrollTop < 100;
 };
 
 window.scrollToTop = function (element) {
-    element.scrollTop = 0;
+    element.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-const _psCache = {};
+// Registrations come in over the air — keep the cache bounded on long sessions
+const _psCache = new Map();
+const PS_CACHE_MAX = 1000;
 
 window.fetchPlanespottersPhoto = async function (registration) {
-    if (_psCache[registration] !== undefined) return _psCache[registration];
+    if (_psCache.has(registration)) return _psCache.get(registration);
+
+    let result = null;
     try {
         const res = await fetch(
             `https://api.planespotters.net/pub/photos/reg/${encodeURIComponent(registration)}`
         );
-        if (!res.ok) { _psCache[registration] = null; return null; }
-        const data = await res.json();
-        const photo = data.photos?.[0];
-        if (!photo) { _psCache[registration] = null; return null; }
-        const result = {
-            url: photo.thumbnail_large?.src ?? photo.thumbnail?.src ?? null,
-            link: photo.link ?? null,
-            photographer: photo.photographer ?? null
-        };
-        _psCache[registration] = result;
-        return result;
+        if (res.ok) {
+            const photo = (await res.json()).photos?.[0];
+            if (photo) {
+                result = {
+                    url: photo.thumbnail_large?.src ?? photo.thumbnail?.src ?? null,
+                    link: photo.link ?? null,
+                    photographer: photo.photographer ?? null
+                };
+            }
+        }
     } catch {
-        _psCache[registration] = null;
-        return null;
+        // Network error / blocked — fall back to placeholder
     }
+
+    if (_psCache.size >= PS_CACHE_MAX) _psCache.delete(_psCache.keys().next().value);
+    _psCache.set(registration, result);
+    return result;
 };

@@ -52,6 +52,7 @@ try
     builder.Services.AddSignalR();
     builder.Services.AddRazorComponents().AddInteractiveServerComponents();
     builder.Services.Configure<FrontendConfig>(builder.Configuration.GetSection("Frontend"));
+    builder.Services.AddScoped<ClientTime>();
 
     builder.Services.AddSingleton<IMessageDecoder, MetarDecoder>();
     builder.Services.AddSingleton<IMessageDecoder, MediaAdvisoryDecoder>();
@@ -84,11 +85,12 @@ try
     });
 
     app.UseResponseCompression();
-    app.UseStaticFiles();
     app.UseAntiforgery();
 
     app.MapHub<AirframeHub>("/hub/acars");
     app.MapMapApi();
+    // Fingerprinted, pre-compressed static assets (replaces UseStaticFiles + manual ?v= cache busting)
+    app.MapStaticAssets();
     app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
     await app.RunAsync().ConfigureAwait(false);

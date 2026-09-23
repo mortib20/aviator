@@ -82,7 +82,12 @@ public sealed class MapQueryService(
 
         var result = new List<AircraftDto>();
 
-        foreach (var group in rows.Where(r => !string.IsNullOrEmpty(r.Icao)).GroupBy(r => r.Icao!))
+        // acarsdec/Jaero frames carry no ICAO hex — fall back to the registration as identity
+        var identified = rows
+            .Select(r => (Key: !string.IsNullOrEmpty(r.Icao) && r.Icao != "0" ? r.Icao : r.AcarsRegistration, Row: r))
+            .Where(x => !string.IsNullOrEmpty(x.Key));
+
+        foreach (var group in identified.GroupBy(x => x.Key!, x => x.Row))
         {
             var sorted = group.OrderBy(r => r.Timestamp).ToList();
             var last   = sorted[^1];

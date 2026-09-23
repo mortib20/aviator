@@ -2,7 +2,7 @@
 @inject NavigationManager Nav
 @implements IDisposable
 
-<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom border-secondary-subtle px-3">
+<nav class="navbar navbar-expand-lg border-bottom border-secondary-subtle px-3">
     <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="/">
         <i class="bi bi-airplane-engines-fill text-primary"></i>
         Aviator
@@ -35,6 +35,16 @@
             </li>
         </ul>
 
+        <form class="nav-search me-lg-3 mb-2 mb-lg-0" role="search" @onsubmit="Search">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-airplane"></i></span>
+                <input class="form-control" type="search" placeholder="Registration…"
+                       aria-label="Go to aircraft by registration"
+                       autocapitalize="characters" spellcheck="false"
+                       @bind="_query" />
+            </div>
+        </form>
+
         @if (Config.Value.ExternalLinks.Count > 0)
         {
             <ul class="navbar-nav">
@@ -42,7 +52,14 @@
                 {
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-center gap-1" href="@link.Url" target="_blank" rel="noopener noreferrer">
-                            <span class="material-icons nav-material-icon">@link.Icon</span>
+                            @if (link.Icon.StartsWith("bi-", StringComparison.Ordinal))
+                            {
+                                <i class="bi @link.Icon"></i>
+                            }
+                            else
+                            {
+                                <span class="material-icons nav-material-icon" aria-hidden="true">@link.Icon</span>
+                            }
                             @link.Title
                             <i class="bi bi-box-arrow-up-right small opacity-50"></i>
                         </a>
@@ -55,6 +72,7 @@
 
 @code {
     private bool _expanded = false;
+    private string _query = "";
 
     protected override void OnInitialized()
     {
@@ -62,6 +80,14 @@
     }
 
     private void ToggleMenu() => _expanded = !_expanded;
+
+    private void Search()
+    {
+        var reg = _query.Trim().ToUpperInvariant();
+        if (reg.Length == 0) return;
+        _query = "";
+        Nav.NavigateTo($"/aircraft/{Uri.EscapeDataString(reg)}");
+    }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
