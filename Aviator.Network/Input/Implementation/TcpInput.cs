@@ -54,6 +54,12 @@ public class TcpInput(ILogger<IInput> logger, string host, int port) : IInput
 
         try
         {
+            // TODO No message framing: each ReadAsync chunk (up to 8 KB) is handed on as one
+            // message, but TCP is a byte stream - a chunk can hold several JSON messages or
+            // only part of one (large dumpvdl2 frames, Nagle, slow links), which then fails to
+            // parse. Split on '\n' instead (e.g. PipeReader + SequenceReader.TryReadTo) and keep
+            // the remainder for the next read; TcpOutput already terminates every message with
+            // '\n'. Unused for now: the deployed config reads UDP only.
             while (true)
             {
                 var buffer = new byte[8192];
