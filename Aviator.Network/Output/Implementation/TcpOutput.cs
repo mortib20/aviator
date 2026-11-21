@@ -67,10 +67,15 @@ public sealed class TcpOutput : IOutput, IDisposable
             return;
         }
 
+        if (buffer.Length == 0)
+        {
+            return;
+        }
+
         await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await _client.GetStream().WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            await _client.GetStream().WriteAsync(FrameLine(buffer), cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is IOException or SocketException)
         {
@@ -84,6 +89,24 @@ public sealed class TcpOutput : IOutput, IDisposable
         {
             _semaphoreSlim.Release();
         }
+    }
+
+    /// <summary>
+    /// TCP is a byte stream: consumers (airframes.io, acars_router, ...) split it into
+    /// messages at newlines. The input datagrams only sometimes carry one (dumphfdl does,
+    /// dumpvdl2/acarsdec/iridium-toolkit don't), so terminate every message here.
+    /// </summary>
+    public static byte[] FrameLine(byte[] buffer)
+    {
+        if (buffer.Length > 0 && buffer[^1] == (byte)'\n')
+        {
+            return buffer;
+        }
+
+        var framed = new byte[buffer.Length + 1];
+        buffer.CopyTo(framed, 0);
+        framed[^1] = (byte)'\n';
+        return framed;
     }
 
     private void HandleDisconnectError(Exception ex)
